@@ -20,6 +20,7 @@ import com.hallyu.domain.model.PostCategory
 import com.hallyu.domain.model.Profile
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 
 internal fun parseProfile(obj: JsonObject): Profile = Profile(
     id = obj.stringOrEmpty("id"),
