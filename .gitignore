@@ -1,0 +1,26 @@
+# Android / Gradle
+.gradle/
+build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+.kotlin/
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Secrets — never commit
+*.keystore
+*.jks
+secrets.properties
+service-account.json
+google-services.json
+
+# Local env
+.env
+.env.*

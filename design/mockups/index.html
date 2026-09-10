@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hallyu — App Mockups</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    background: #0F0F0F; color: #eee;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h1 span {
+    background: linear-gradient(90deg,#4A1C6E,#2D6CDF);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p.sub { color: #9aa; margin: 0 0 20px; font-size: 13px; }
+  .grid {
+    display: grid; gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+  .card {
+    background: #1A1A1E; border: 1px solid #26262c; border-radius: 14px;
+    overflow: hidden; padding: 0 0 10px;
+  }
+  .card img { width: 100%; display: block; background:#000; aspect-ratio: 9/16; object-fit: cover; }
+  .label { padding: 10px 12px 0; font-size: 13px; font-weight: 600; }
+  .idx { color: #888; font-weight: 400; margin-right: 6px; }
+  .pending { color: #FF6B6B; font-size: 12px; padding: 0 12px 6px; }
+</style>
+</head>
+<body>
+  <h1>Hallyu <span>한류</span> — App Screen Mockups</h1>
+  <p class="sub">Where the Wave Lives · Kotlin / Jetpack Compose (native Android) · Dark cinematic design system (#0F0F0F · #4A1C6E→#2D6CDF · #FF6B6B)</p>
+  <div class="grid" id="grid"></div>
+<script>
+  const screens = [
+    ["01_splash.png","Splash"],
+    ["02_welcome.png","Welcome"],
+    ["03_signup.png","Sign up"],
+    ["04_login.png","Login"],
+    ["05_account_recovery.png","Account recovery"],
+    ["06_onboarding_interests.png","Onboarding · Interests"],
+    ["07_onboarding_dramas.png","Onboarding · Favorite dramas"],
+    ["08_onboarding_actors.png","Onboarding · Favorite actors"],
+    ["09_onboarding_communities.png","Onboarding · Communities"],
+    ["10_onboarding_complete.png","Onboarding · Completion"],
+    ["11_home_for_you.png","Home · For You"],
+    ["12_home_following.png","Home · Following"],
+    ["13_explore.png","Explore"],
+    ["14_create.png","Create"],
+    ["15_notifications.png","Notifications"],
+    ["16_profile.png","Profile"],
+    ["17_post_detail.png","Post detail"],
+    ["18_comments.png","Comments"],
+    ["19_drama_hub.png","Drama hub"],
+    ["20_episode_page.png","Episode page"],
+    ["21_episode_discussion.png","Episode discussion"],
+    ["22_actor_page.png","Actor page"],
+    ["23_community_page.png","Community page"],
+    ["24_search_results.png","Search results"],
+    ["25_hashtag_page.png","Hashtag page"],
+    ["26_saved.png","Profile · Saved"],
+    ["27_followers.png","Profile · Followers"],
+    ["28_following.png","Profile · Following"],
+    ["29_currently_watching.png","Currently watching"],
+    ["30_communities.png","My communities"],
+    ["31_settings.png","Settings"],
+    ["32_moderation_queue.png","Moderation queue"],
+  ];
+  const grid = document.getElementById("grid");
+  screens.forEach((s,i)=>{
+    const n = i+1;
+    const card = document.createElement("div");
+    card.className = "card";
+    const label = document.createElement("div");
+    label.className = "label";
+    label.innerHTML = `<span class="idx">${String(n).padStart(2,"0")}</span>${s[1]}`;
+    card.appendChild(label);
+    const img = document.createElement("img");
+    img.loading = "lazy";
+    img.alt = s[1];
+    img.onerror = ()=>{ img.style.display="none"; const p=document.createElement("div"); p.className="pending"; p.textContent="⏳ pending — generating next turn"; card.appendChild(p); };
+    img.src = "./preview/"+s[0].replace(/\.png$/,".jpg");
+    card.appendChild(img);
+    grid.appendChild(card);
+  });
+</script>
+</body>
+</html>

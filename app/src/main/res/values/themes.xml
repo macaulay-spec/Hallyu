@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.Hallyu" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/hallyu_background</item>
+        <item name="android:statusBarColor">@color/hallyu_background</item>
+        <item name="android:navigationBarColor">@color/hallyu_background</item>
+    </style>
+</resources>
