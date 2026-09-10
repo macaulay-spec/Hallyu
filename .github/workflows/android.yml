@@ -41,26 +41,40 @@ jobs:
           set -o pipefail
           ./gradlew testDebugUnitTest --no-daemon --stacktrace 2>&1 | tee gradle-test.log
 
-      - name: Post build log as commit comment (on failure)
+      - name: Report build failure
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set +e
-          {
-            echo "### Build failed on \`$GITHUB_SHA\`"
-            echo ""
-            echo "#### Compile errors"
-            grep -E '^e: ' gradle-build.log gradle-test.log 2>/dev/null | head -300
-            echo ""
-            echo "#### What went wrong"
-            grep -A 30 'What went wrong' gradle-build.log gradle-test.log 2>/dev/null | head -60
-            echo ""
-            echo "#### Tail"
-            tail -n 80 gradle-build.log 2>/dev/null
-            tail -n 40 gradle-test.log 2>/dev/null
-          } > /tmp/report.txt
-          jq -Rs '{body: .}' /tmp/report.txt | gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" --input -
+          LOG=gradle-build.log
+          [ -s "$LOG" ] || LOG=gradle-test.log
+
+          # 1) Post the log tail as a commit comment via the REST API
+          python3 - "$LOG" > /tmp/body.json <<'PY'
+          import json, sys
+          data = open(sys.argv[1], errors='replace').read()
+          json.dump({"body": "```\n" + data[-30000:] + "\n```"}, sys.stdout)
+          PY
+          curl -sS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/body.json \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments" \
+            > /tmp/comment.json 2>/tmp/comment.err || true
+          echo "comment response: $(head -c 200 /tmp/comment.json)"
+
+          # 2) Reliable fallback: push the log into the repo with [skip ci]
+          git config user.email "ci-bot@users.noreply.github.com"
+          git config user.name "CI Bot"
+          git fetch origin "$GITHUB_REF_NAME" --depth 1 || true
+          git checkout -B ci-report "origin/$GITHUB_REF_NAME" || true
+          mkdir -p ci
+          cp "$LOG" ci/build-failure.log
+          git add ci/build-failure.log
+          git commit -m "ci: build failure log [skip ci]" || true
+          git push origin "ci-report:$GITHUB_REF_NAME" || true
 
       - name: Upload APK
         if: success()
