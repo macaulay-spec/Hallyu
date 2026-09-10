@@ -41,21 +41,30 @@ jobs:
           set -o pipefail
           ./gradlew testDebugUnitTest --no-daemon --stacktrace 2>&1 | tee gradle-test.log
 
-      - name: Write failure summary
+      - name: Emit failure annotations
         if: always()
         run: |
           set +e
           LOG=gradle-build.log
           [ -s "$LOG" ] || LOG=gradle-test.log
           {
-            echo "## Gradle log (tail) — $GITHUB_SHA"
-            echo
-            echo '```'
-            grep -E '^e: |error:|FAILURE:|What went wrong|Caused by|> Task .* FAILED' "$LOG" 2>/dev/null | head -200
-            echo '...'
-            tail -n 120 "$LOG" 2>/dev/null
-            echo '```'
-          } | head -c 60000 >> "$GITHUB_STEP_SUMMARY"
+            echo "WHAT WENT WRONG:"
+            grep -A 30 'What went wrong' "$LOG" 2>/dev/null | head -40
+            echo "COMPILE ERRORS:"
+            grep -E '^e: ' "$LOG" 2>/dev/null | head -150
+            echo "TAIL:"
+            tail -n 100 "$LOG" 2>/dev/null
+          } > /tmp/diag.txt
+          python3 - <<'PY'
+          data = open('/tmp/diag.txt', errors='replace').read()
+          data = data.replace('\r', '').replace('\n', ' | ').replace('::', ';:')[:400000]
+          n = 8
+          chunk = max(1, (len(data) + n - 1) // n)
+          for i in range(n):
+              piece = data[i * chunk:(i + 1) * chunk]
+              if piece:
+                  print(f"::error title=build-fail-{i + 1}::{piece}")
+          PY
 
       - name: Upload APK
         if: success()
