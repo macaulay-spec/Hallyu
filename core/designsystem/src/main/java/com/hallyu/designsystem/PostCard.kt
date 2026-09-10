@@ -111,9 +111,10 @@ fun PostCard(
                     color = HallyuColors.TextSecondary,
                 )
             }
-            if (post.category != null) {
+            val category = post.category
+            if (category != null) {
                 Text(
-                    text = com.hallyu.domain.model.Categories.label(post.category),
+                    text = com.hallyu.domain.model.Categories.label(category),
                     style = MaterialTheme.typography.labelMedium,
                     color = HallyuColors.TextSecondary,
                 )
@@ -121,10 +122,11 @@ fun PostCard(
         }
 
         // Drama / episode context — the product's identity element
-        if (post.dramaTitle != null) {
+        val dramaTitle = post.dramaTitle
+        if (dramaTitle != null) {
             Spacer(Modifier.height(Spacing.sm))
             DramaContextChip(
-                dramaTitle = post.dramaTitle,
+                dramaTitle = dramaTitle,
                 episodeNumber = post.episodeNumber,
                 onClick = onDramaClick,
             )

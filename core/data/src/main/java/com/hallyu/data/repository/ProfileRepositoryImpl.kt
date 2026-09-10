@@ -42,7 +42,8 @@ class ProfileRepositoryImpl @Inject constructor(
         val body = buildJsonObject {
             put("display_name", profile.displayName)
             put("bio", profile.bio)
-            if (profile.avatarUrl != null) put("avatar_url", profile.avatarUrl)
+            val avatarUrl = profile.avatarUrl
+            if (avatarUrl != null) put("avatar_url", avatarUrl)
         }
         return when (val res = client.restPatch("profiles", mapOf("id" to "eq.$id"), body)) {
             is AppResult.Error -> res

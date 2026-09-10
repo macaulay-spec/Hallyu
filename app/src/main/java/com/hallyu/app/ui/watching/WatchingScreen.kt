@@ -93,8 +93,9 @@ fun WatchingScreen(navController: NavController, viewModel: WatchingViewModel = 
                             Modifier.width(48.dp).height(68.dp).background(HallyuColors.Surface),
                             contentAlignment = Alignment.Center,
                         ) {
-                            if (drama.posterUrl != null) {
-                                AsyncImage(model = drama.posterUrl, contentDescription = drama.title, contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.width(48.dp).height(68.dp))
+                            val posterUrl = drama.posterUrl
+                            if (posterUrl != null) {
+                                AsyncImage(model = posterUrl, contentDescription = drama.title, contentScale = androidx.compose.ui.layout.ContentScale.Crop, modifier = Modifier.width(48.dp).height(68.dp))
                             }
                         }
                         Spacer(Modifier.width(Spacing.md))

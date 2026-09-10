@@ -180,8 +180,8 @@ private fun DramaHubContent(state: DramaState, navController: NavController, vie
                 }
                 Column(Modifier.padding(Spacing.lg)) {
                     Text(drama.title, style = MaterialTheme.typography.headlineMedium)
-                    if (!drama.koreanTitle.isNullOrBlank()) {
-                        Text(drama.koreanTitle, style = MaterialTheme.typography.labelMedium, color = HallyuColors.TextSecondary)
+                    drama.koreanTitle?.takeIf { it.isNotBlank() }?.let { koreanTitle ->
+                        Text(koreanTitle, style = MaterialTheme.typography.labelMedium, color = HallyuColors.TextSecondary)
                     }
                     Text(
                         listOfNotNull(drama.status.name.lowercase().replaceFirstChar { it.uppercase() }, drama.airsOn, drama.year.takeIf { it > 0 }?.toString()).joinToString(" · "),
@@ -262,8 +262,8 @@ private fun EpisodeRow(episode: Episode, onOpen: () -> Unit) {
         Spacer(Modifier.width(Spacing.md))
         Column(Modifier.weight(1f)) {
             Text("Episode ${episode.number}", style = MaterialTheme.typography.labelLarge)
-            if (!episode.title.isNullOrBlank()) {
-                Text(episode.title, style = MaterialTheme.typography.labelMedium, color = HallyuColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            episode.title?.takeIf { it.isNotBlank() }?.let { title ->
+                Text(title, style = MaterialTheme.typography.labelMedium, color = HallyuColors.TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             if (episode.discussionCount > 0) {
                 Text("${episode.discussionCount} discussions", style = MaterialTheme.typography.labelMedium, color = HallyuColors.BrandGradientEnd)
@@ -359,13 +359,14 @@ fun ActorScreen(actorId: String, navController: NavController, viewModel: DramaV
                         Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)).background(brandGradientVertical),
                         contentAlignment = Alignment.BottomStart,
                     ) {
-                        if (actor.photoUrl != null) {
-                            AsyncImage(model = actor.photoUrl, contentDescription = actor.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                        val photoUrl = actor.photoUrl
+                        if (photoUrl != null) {
+                            AsyncImage(model = photoUrl, contentDescription = actor.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                         }
                         Column(Modifier.padding(Spacing.lg)) {
                             Text(actor.name, style = MaterialTheme.typography.headlineMedium)
-                            if (!actor.koreanName.isNullOrBlank()) {
-                                Text(actor.koreanName, style = MaterialTheme.typography.labelMedium, color = HallyuColors.TextSecondary)
+                            actor.koreanName?.takeIf { it.isNotBlank() }?.let { koreanName ->
+                                Text(koreanName, style = MaterialTheme.typography.labelMedium, color = HallyuColors.TextSecondary)
                             }
                         }
                     }

@@ -82,10 +82,13 @@ class NotificationsViewModel @Inject constructor(
     fun open(item: AppNotification, navController: NavController) {
         viewModelScope.launch { repository.markRead(item.id) }
         state = state.copy(items = state.items.map { if (it.id == item.id) it.copy(read = true) else it })
+        val postId = item.postId
+        val dramaId = item.dramaId
+        val episodeNumber = item.episodeNumber
         when {
-            item.postId != null -> navController.navigate(Routes.post(item.postId))
-            item.dramaId != null && item.episodeNumber != null -> navController.navigate(Routes.discussion(item.dramaId, item.episodeNumber))
-            item.dramaId != null -> navController.navigate(Routes.drama(item.dramaId))
+            postId != null -> navController.navigate(Routes.post(postId))
+            dramaId != null && episodeNumber != null -> navController.navigate(Routes.discussion(dramaId, episodeNumber))
+            dramaId != null -> navController.navigate(Routes.drama(dramaId))
         }
     }
 }
@@ -139,9 +142,10 @@ private fun NotificationRow(item: AppNotification, onClick: () -> Unit) {
             Text(item.body, style = MaterialTheme.typography.bodyMedium, color = HallyuColors.TextSecondary, maxLines = 2)
             Text(com.hallyu.designsystem.timeAgo(item.createdAt), style = MaterialTheme.typography.labelMedium, color = HallyuColors.TextTertiary)
         }
-        if (item.actor != null) {
+        val actor = item.actor
+        if (actor != null) {
             Spacer(Modifier.width(Spacing.sm))
-            HallyuAvatar(item.actor.avatarUrl, item.actor.username, 36)
+            HallyuAvatar(actor.avatarUrl, actor.username, 36)
         }
     }
 }
