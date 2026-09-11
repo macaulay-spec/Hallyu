@@ -79,7 +79,7 @@ fun OnboardingInterestsScreen(navController: NavController, viewModel: Onboardin
                 Spacer(Modifier.height(Spacing.sm))
             }
             Spacer(Modifier.height(Spacing.lg))
-            HallyuButton("Continue") { navController.navigate(Routes.ONBOARDING_DRAMAS) }
+            HallyuButton(text = "Continue", onClick = { navController.navigate(Routes.ONBOARDING_DRAMAS) })
             Text(
                 text = "Skip for now",
                 style = MaterialTheme.typography.labelMedium,
@@ -123,7 +123,7 @@ fun OnboardingDramasScreen(navController: NavController, viewModel: OnboardingVi
                 }
             }
             Spacer(Modifier.height(Spacing.lg))
-            HallyuButton("Continue") { navController.navigate(Routes.ONBOARDING_ACTORS) }
+            HallyuButton(text = "Continue", onClick = { navController.navigate(Routes.ONBOARDING_ACTORS) })
         }
     }
 }
@@ -172,7 +172,7 @@ fun OnboardingActorsScreen(navController: NavController, viewModel: OnboardingVi
                 }
             }
             Spacer(Modifier.height(Spacing.lg))
-            HallyuButton("Continue") { navController.navigate(Routes.ONBOARDING_COMMUNITIES) }
+            HallyuButton(text = "Continue", onClick = { navController.navigate(Routes.ONBOARDING_COMMUNITIES) })
         }
     }
 }
@@ -220,7 +220,7 @@ fun OnboardingCommunitiesScreen(navController: NavController, viewModel: Onboard
                 }
             }
             Spacer(Modifier.height(Spacing.lg))
-            HallyuButton("Continue") { navController.navigate(Routes.ONBOARDING_COMPLETE) }
+            HallyuButton(text = "Continue", onClick = { navController.navigate(Routes.ONBOARDING_COMPLETE) })
         }
     }
 }
@@ -248,12 +248,12 @@ fun OnboardingCompleteScreen(navController: NavController, viewModel: Onboarding
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(48.dp))
-        HallyuButton("Enter Hallyu") {
+        HallyuButton(text = "Enter Hallyu", onClick = {
             viewModel.complete()
             navController.navigate(Routes.MAIN) {
                 popUpTo(Routes.SPLASH) { inclusive = true }
             }
-        }
+        })
     }
 }
 

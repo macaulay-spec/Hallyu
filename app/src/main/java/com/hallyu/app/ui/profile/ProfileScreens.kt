@@ -90,12 +90,12 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hi
                         ProfileLink(Icons.Filled.Settings, "Settings") { navController.navigate(Routes.SETTINGS) }
                         ProfileLink(Icons.Filled.Warning, "Moderation") { navController.navigate(Routes.MODERATION) }
                         Spacer(Modifier.height(Spacing.lg))
-                        HallyuButton("Log out") {
+                        HallyuButton(text = "Log out", onClick = {
                             viewModel.logout()
                             navController.navigate(Routes.WELCOME) {
                                 popUpTo(0) { inclusive = true }
                             }
-                        }
+                        })
                     }
                 }
             }
