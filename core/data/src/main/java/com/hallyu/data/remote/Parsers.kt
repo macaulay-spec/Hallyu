@@ -1,12 +1,12 @@
 package com.hallyu.data.remote
 
-import com.hallyu.data.remote.JsonParsing.boolOrFalse
-import com.hallyu.data.remote.JsonParsing.intOrNull
-import com.hallyu.data.remote.JsonParsing.intOrZero
-import com.hallyu.data.remote.JsonParsing.objectOrNull
-import com.hallyu.data.remote.JsonParsing.stringList
-import com.hallyu.data.remote.JsonParsing.stringOrEmpty
-import com.hallyu.data.remote.JsonParsing.stringOrNull
+import com.hallyu.data.remote.boolOrFalse
+import com.hallyu.data.remote.intOrNull
+import com.hallyu.data.remote.intOrZero
+import com.hallyu.data.remote.objectOrNull
+import com.hallyu.data.remote.stringList
+import com.hallyu.data.remote.stringOrEmpty
+import com.hallyu.data.remote.stringOrNull
 import com.hallyu.domain.model.Actor
 import com.hallyu.domain.model.AppNotification
 import com.hallyu.domain.model.Community

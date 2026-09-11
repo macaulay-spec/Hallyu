@@ -1,14 +1,16 @@
 package com.hallyu.data.repository
 
 import com.hallyu.common.AppResult
-import com.hallyu.data.remote.JsonParsing.intOrZero
-import com.hallyu.data.remote.JsonParsing.mapObjects
-import com.hallyu.data.remote.JsonParsing.objectOrNull
-import com.hallyu.data.remote.JsonParsing.stringOrEmpty
-import com.hallyu.data.remote.Parsers.parseActor
-import com.hallyu.data.remote.Parsers.parseDrama
-import com.hallyu.data.remote.Parsers.parsePost
-import com.hallyu.data.remote.Parsers.parseProfile
+import com.hallyu.common.map
+import com.hallyu.common.valueOrNull
+import com.hallyu.data.remote.intOrZero
+import com.hallyu.data.remote.mapObjects
+import com.hallyu.data.remote.objectOrNull
+import com.hallyu.data.remote.stringOrEmpty
+import com.hallyu.data.remote.parseActor
+import com.hallyu.data.remote.parseDrama
+import com.hallyu.data.remote.parsePost
+import com.hallyu.data.remote.parseProfile
 import com.hallyu.data.remote.SupabaseRestClient
 import com.hallyu.domain.model.Community
 import com.hallyu.domain.model.CommunityVisibility

@@ -2,8 +2,10 @@ package com.hallyu.data.repository
 
 import com.hallyu.common.AppError
 import com.hallyu.common.AppResult
-import com.hallyu.data.remote.JsonParsing.mapObjects
-import com.hallyu.data.remote.JsonParsing.stringOrEmpty
+import com.hallyu.common.map
+import com.hallyu.common.valueOrNull
+import com.hallyu.data.remote.mapObjects
+import com.hallyu.data.remote.stringOrEmpty
 import com.hallyu.data.remote.SupabaseRestClient
 import com.hallyu.data.session.SessionStore
 import com.hallyu.domain.model.Report

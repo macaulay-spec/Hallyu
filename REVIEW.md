@@ -27,7 +27,7 @@
 
 | Area | Status | Note |
 |---|---|---|
-| Build verification | ⏳ in CI | No Android SDK in this sandbox — GitHub Actions is the compiler. Result below once green. |
+| Build verification | ⏳ in CI | No Android SDK in this sandbox — GitHub Actions is the compiler. Compile errors are being found and fixed iteratively (see CI log below). |
 | Supabase project | ⏳ external | Needs a project + `SUPABASE_URL`/`SUPABASE_ANON_KEY`. Adapter is real; config is documented. |
 | Realtime push | planned | Schema + client ready; live subscriptions not yet bound to ViewModels. |
 | Storage (image upload) | planned | Post model carries `imageUrls`; upload path not wired (image_picker + Storage). |
@@ -35,6 +35,24 @@
 | Deep links from notifications | partial | In-app navigation wired; manifest intent-filters + FCM pending. |
 | Unit test coverage | domain only | `SpoilerPolicyTest` runs in CI; UI/repo tests are future work. |
 | Light theme / fonts | deferred | Dark-only v1; Inter + Black Han Sans to be bundled (SansSerif fallback now). |
+
+## 3.5 CI build log (live)
+
+No Android SDK exists in this sandbox, so GitHub Actions is the compiler of record. The workflow
+(`.github/workflows/android.yml`) writes every Gradle failure back as a check-run annotation, so each error is read
+directly from the API and fixed rather than guessed at.
+
+| Round | Failure | Root cause | Fix |
+|---|---|---|---|
+| 1 | `:core:designsystem` | smart-cast across module boundary on `post.category` / `post.dramaTitle` (`PostCard.kt`) | local `val`s |
+| 2 | `:core:data` | `Unresolved reference 'contentOrNull'` | add `kotlinx.serialization.json.contentOrNull` import |
+| 3 | `:core:data` | `JsonParsing.*`/`Parsers.*` imported as objects (they are top-level funcs); `map`/`valueOrNull` extensions unimported; `JsonObjectBuilder.putAll` doesn't exist | correct imports; iterate `put(key, value)` instead of `putAll` |
+
+Additionally swept and fixed the same cross-module smart-cast pattern across `app` (`NotificationsScreen`, `DramaScreens`,
+`WatchingScreen`) and `core:data` (`ProfileRepositoryImpl`) before the compiler even reached them.
+
+**Status at review time:** rounds 1–3 fixes are committed; the round-3 batch is staged locally and awaiting the next
+push + CI run (GitHub authentication dropped mid-session and needs reconnecting in Arena to continue).
 
 ## 4. Risks & watch-items
 

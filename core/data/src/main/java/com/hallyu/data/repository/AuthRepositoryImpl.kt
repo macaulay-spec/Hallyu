@@ -1,6 +1,8 @@
 package com.hallyu.data.repository
 
 import com.hallyu.common.AppResult
+import com.hallyu.common.map
+import com.hallyu.common.valueOrNull
 import com.hallyu.data.remote.SupabaseRestClient
 import com.hallyu.data.session.SessionStore
 import com.hallyu.domain.model.AuthSession

@@ -2,16 +2,18 @@ package com.hallyu.data.repository
 
 import com.hallyu.common.AppError
 import com.hallyu.common.AppResult
-import com.hallyu.data.remote.JsonParsing.arrayOrEmpty
-import com.hallyu.data.remote.JsonParsing.boolOrFalse
-import com.hallyu.data.remote.JsonParsing.intOrNull
-import com.hallyu.data.remote.JsonParsing.intOrZero
-import com.hallyu.data.remote.JsonParsing.mapObjects
-import com.hallyu.data.remote.JsonParsing.objectOrNull
-import com.hallyu.data.remote.JsonParsing.stringList
-import com.hallyu.data.remote.JsonParsing.stringOrEmpty
-import com.hallyu.data.remote.JsonParsing.stringOrNull
-import com.hallyu.data.remote.Parsers.parseProfile
+import com.hallyu.common.map
+import com.hallyu.common.valueOrNull
+import com.hallyu.data.remote.arrayOrEmpty
+import com.hallyu.data.remote.boolOrFalse
+import com.hallyu.data.remote.intOrNull
+import com.hallyu.data.remote.intOrZero
+import com.hallyu.data.remote.mapObjects
+import com.hallyu.data.remote.objectOrNull
+import com.hallyu.data.remote.stringList
+import com.hallyu.data.remote.stringOrEmpty
+import com.hallyu.data.remote.stringOrNull
+import com.hallyu.data.remote.parseProfile
 import com.hallyu.data.remote.SupabaseRestClient
 import com.hallyu.data.session.SessionStore
 import com.hallyu.domain.model.Comment
@@ -30,7 +32,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putAll
 
 @Singleton
 class PostRepositoryImpl @Inject constructor(
@@ -156,7 +157,7 @@ class PostRepositoryImpl @Inject constructor(
     }
 
     private fun JsonObject.copyBookmarked(): JsonObject = buildJsonObject {
-        putAll(this@copyBookmarked)
+        this@copyBookmarked.forEach { (key, value) -> put(key, value) }
         put("is_bookmarked", true)
     }
 
