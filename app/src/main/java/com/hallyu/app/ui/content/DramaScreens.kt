@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.content
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -151,7 +152,7 @@ fun DramaHubScreen(dramaId: String, navController: NavController, viewModel: Dra
     LaunchedEffect(dramaId) { viewModel.load(dramaId) }
     val state = viewModel.state
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "", onBack = { navController.popBackStack() })
         when {
             state.loading && state.drama == null -> LoadingState()
@@ -281,7 +282,7 @@ fun EpisodePageScreen(dramaId: String, number: Int, navController: NavController
     val state = viewModel.state
     val episode = state.episodes.firstOrNull { it.number == number }
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Episode $number", onBack = { navController.popBackStack() })
         if (episode == null) {
             LoadingState()
@@ -313,7 +314,7 @@ fun EpisodeDiscussionScreen(dramaId: String, number: Int, navController: NavCont
     }
     val state = viewModel.state
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Episode $number · Discussion", onBack = { navController.popBackStack() })
         if (state.discussion.isEmpty()) {
             EmptyState(
@@ -348,7 +349,7 @@ fun EpisodeDiscussionScreen(dramaId: String, number: Int, navController: NavCont
 fun ActorScreen(actorId: String, navController: NavController, viewModel: DramaViewModel = hiltViewModel()) {
     LaunchedEffect(actorId) { viewModel.loadActor(actorId) }
     val state = viewModel.state
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "", onBack = { navController.popBackStack() })
         when {
             state.loading && state.actor == null -> LoadingState()

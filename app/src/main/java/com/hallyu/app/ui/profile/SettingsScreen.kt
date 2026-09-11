@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.profile
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -45,7 +46,7 @@ class SettingsViewModel @Inject constructor(
 
 @Composable
 fun SettingsScreen(navController: NavController, viewModel: SettingsViewModel = hiltViewModel()) {
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Settings", onBack = { navController.popBackStack() })
         Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Spacing.lg)) {
             SectionTitle("Spoilers")

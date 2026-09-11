@@ -44,11 +44,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,6 +63,64 @@ val brandGradient: Brush = Brush.horizontalGradient(
 val brandGradientVertical: Brush = Brush.verticalGradient(
     listOf(HallyuColors.BrandGradientStart, HallyuColors.BrandGradientEnd),
 )
+
+/** The charcoal stage every screen sits on — violet at the top, blue at the bottom (BLUEPRINT.md §2). */
+val HallyuScreenBrush: Brush = Brush.linearGradient(
+    colors = listOf(HallyuColors.SceneTop, HallyuColors.SceneMid, HallyuColors.SceneBottom),
+    start = Offset(0f, 0f),
+    end = Offset(1000f, 1900f),
+)
+
+/** Curated cinematic gradient palette for poster/monogram artwork, keyed by any stable string. */
+private val PosterPalettes = listOf(
+    listOf(Color(0xFF2B1E54), Color(0xFF7C3AED)),
+    listOf(Color(0xFF0E2A4A), Color(0xFF2D6CDF)),
+    listOf(Color(0xFF3A1030), Color(0xFFDB2777)),
+    listOf(Color(0xFF0F3B33), Color(0xFF10B981)),
+    listOf(Color(0xFF4A1414), Color(0xFFF43F5E)),
+    listOf(Color(0xFF123A52), Color(0xFF38BDF8)),
+    listOf(Color(0xFF3A2A10), Color(0xFFF59E0B)),
+    listOf(Color(0xFF1E1B4B), Color(0xFF6366F1)),
+)
+
+fun posterGradient(seed: String): Brush {
+    val idx = (seed.hashCode() and Int.MAX_VALUE) % PosterPalettes.size
+    val c = PosterPalettes[idx]
+    return Brush.verticalGradient(listOf(c[0], c[1]))
+}
+
+/** Ambient scene wrapper — deep charcoal with soft violet/blue glow. Screens render inside this. */
+@Composable
+fun HallyuBackground(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier = modifier.fillMaxSize().background(HallyuScreenBrush)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(HallyuColors.GlowViolet, Color.Transparent),
+                        center = Offset(0f, 0f),
+                        radius = 1200f,
+                    )
+                )
+        )
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(HallyuColors.GlowBlue, Color.Transparent),
+                        center = Offset(1200f, 2400f),
+                        radius = 1400f,
+                    )
+                )
+        )
+        content()
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Buttons
@@ -79,8 +139,8 @@ fun HallyuButton(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .height(50.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(bg)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -104,12 +164,12 @@ fun HallyuOutlinedButton(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .height(50.dp)
+            .clip(RoundedCornerShape(14.dp))
             .border(
                 width = 1.dp,
                 color = if (accent) HallyuColors.Accent else HallyuColors.Outline,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -149,7 +209,7 @@ fun HallyuTopBar(
         }
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -168,7 +228,8 @@ fun GlassBottomNav(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp)
+            .height(66.dp)
+            .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             .background(HallyuColors.SurfaceGlass)
             .border(width = 0.5.dp, color = HallyuColors.Outline),
         verticalAlignment = Alignment.CenterVertically,
@@ -178,7 +239,7 @@ fun GlassBottomNav(
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
                     .background(brandGradient)
                     .clickable(onClick = onCreate),
@@ -222,13 +283,12 @@ private fun RowScope.NavTab(icon: ImageVector, label: String, selected: Boolean,
 
 @Composable
 fun HallyuAvatar(url: String?, name: String, size: Int = 40) {
-    val radius = size / 2
     if (url.isNullOrBlank()) {
         Box(
             modifier = Modifier
                 .size(size.dp)
                 .clip(CircleShape)
-                .background(brandGradient),
+                .background(posterGradient(name)),
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -382,16 +442,30 @@ fun DramaPosterCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(168.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(HallyuColors.Surface),
+                .clip(RoundedCornerShape(16.dp))
+                .background(posterGradient(title)),
         ) {
             if (posterUrl.isNullOrBlank()) {
-                Box(
-                    Modifier.fillMaxSize().background(brandGradientVertical),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(title.take(1).uppercase(), color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = title.take(1).uppercase(),
+                        color = Color.White.copy(alpha = 0.92f),
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
+                // subtle diagonal light streak for depth
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(Color.White.copy(alpha = 0f), Color.White.copy(alpha = 0.14f), Color.White.copy(alpha = 0f)),
+                                start = Offset(0f, 0f),
+                                end = Offset(400f, 700f),
+                            )
+                        )
+                )
             } else {
                 AsyncImage(
                     model = posterUrl,
@@ -456,13 +530,13 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.weight(1f),
         )
         if (action != null && onAction != null) {
             Text(
                 text = action,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 color = HallyuColors.BrandGradientEnd,
                 modifier = Modifier.clickable(onClick = onAction),
             )
@@ -488,7 +562,7 @@ fun HallyuSearchBar(
         placeholder = { Text(placeholder, color = HallyuColors.TextTertiary) },
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", tint = HallyuColors.TextSecondary) },
         singleLine = true,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = HallyuColors.BrandGradientEnd,
             unfocusedBorderColor = HallyuColors.Outline,
@@ -518,7 +592,7 @@ fun FilterChips(
             FilterChip(
                 selected = isSelected,
                 onClick = { onSelect(option) },
-                label = { Text(option) },
+                label = { Text(option, textAlign = TextAlign.Center) },
                 colors = FilterChipDefaults.filterChipColors(
                     containerColor = HallyuColors.Surface,
                     labelColor = if (isSelected) HallyuColors.OnBackground else HallyuColors.TextSecondary,

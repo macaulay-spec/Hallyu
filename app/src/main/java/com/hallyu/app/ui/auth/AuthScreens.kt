@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.auth
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -72,7 +73,7 @@ fun SplashScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize().background(HallyuColors.Background),
+        modifier = Modifier.fillMaxSize().background(HallyuScreenBrush),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -120,7 +121,7 @@ fun WelcomeScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(HallyuColors.Background)
+            .background(HallyuScreenBrush)
             .verticalScroll(rememberScrollState())
             .padding(Spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -290,7 +291,7 @@ private fun AuthFormScaffold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().background(HallyuColors.Background),
+        modifier = Modifier.fillMaxSize().background(HallyuScreenBrush),
     ) {
         HallyuTopBar(title = title, onBack = onBack)
         Column(

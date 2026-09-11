@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.profile
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,7 +35,7 @@ import com.hallyu.designsystem.Spacing
 @Composable
 fun MyCommunitiesScreen(navController: NavController, viewModel: ProfileViewModel = hiltViewModel()) {
     LaunchedEffect(Unit) { viewModel.loadCommunities() }
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Communities", onBack = { navController.popBackStack() })
         if (viewModel.state.communities.isEmpty()) {
             EmptyState(Icons.Outlined.Groups, "No communities yet", "Join communities from Explore or onboarding.")

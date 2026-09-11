@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.content
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -87,7 +88,7 @@ fun CommunityScreen(communityId: String, navController: NavController, viewModel
     LaunchedEffect(communityId) { viewModel.load(communityId) }
     val state = viewModel.state
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "", onBack = { navController.popBackStack() })
         when {
             state.loading && state.community == null -> LoadingState()

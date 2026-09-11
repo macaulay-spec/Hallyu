@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.watching
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -78,7 +79,7 @@ class WatchingViewModel @Inject constructor(
 @Composable
 fun WatchingScreen(navController: NavController, viewModel: WatchingViewModel = hiltViewModel()) {
     val state = viewModel.state
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Currently Watching", onBack = { navController.popBackStack() })
         when {
             state.loading && state.dramas.isEmpty() -> LoadingState()

@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.feed
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,7 +44,7 @@ import com.hallyu.domain.model.Post
 fun HomeScreen(navController: NavController, viewModel: FeedViewModel = hiltViewModel()) {
     val state = viewModel.state
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         // Header + segmented control
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg, vertical = Spacing.sm),

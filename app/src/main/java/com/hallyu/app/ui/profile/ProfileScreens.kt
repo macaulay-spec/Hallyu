@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.profile
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -47,7 +48,7 @@ import com.hallyu.domain.model.Profile
 @Composable
 fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel = hiltViewModel()) {
     val state = viewModel.state
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Profile")
         if (state.loading && state.profile == null) {
             LoadingState()
@@ -128,7 +129,7 @@ private fun ProfileLink(icon: androidx.compose.ui.graphics.vector.ImageVector, l
 fun SavedScreen(navController: NavController, viewModel: ProfileViewModel = hiltViewModel()) {
     LaunchedEffect(Unit) { viewModel.loadSaved() }
     val state = viewModel.state
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Saved", onBack = { navController.popBackStack() })
         if (state.saved.isEmpty()) {
             EmptyState(Icons.Outlined.BookmarkBorder, "Nothing saved yet", "Tap the bookmark icon on any post to keep it here.")
@@ -169,7 +170,7 @@ private fun PeopleList(
     onFollow: (Profile) -> Unit,
     onUnfollow: (Profile) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = title, onBack = { navController.popBackStack() })
         if (people.isEmpty()) {
             EmptyState(Icons.Outlined.BookmarkBorder, "No one here yet", "Follow fans to see their posts.")

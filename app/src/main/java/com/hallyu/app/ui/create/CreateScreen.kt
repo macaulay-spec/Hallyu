@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.create
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,7 +49,7 @@ fun CreateScreen(onPublished: () -> Unit, viewModel: CreateViewModel = hiltViewM
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Create")
         Column(
             modifier = Modifier

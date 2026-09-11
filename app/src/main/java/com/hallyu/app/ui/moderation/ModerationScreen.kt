@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.moderation
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -78,7 +79,7 @@ class ModerationViewModel @Inject constructor(
 @Composable
 fun ModerationScreen(navController: NavController, viewModel: ModerationViewModel = hiltViewModel()) {
     val state = viewModel.state
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Moderation", onBack = { navController.popBackStack() })
         when {
             state.loading && state.reports.isEmpty() -> LoadingState()

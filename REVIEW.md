@@ -1,68 +1,52 @@
-# Hallyu — Build Review
+# Hallyu — Build Review (v2)
 
-**Reviewer:** Arena.ai coding agent · **Date:** 2026-09-10 · **Branch:** `arena/01a08d15-hallyu`
+**Reviewer:** Arena.ai coding agent · **Branch:** `arena/01a08d15-hallyu`
 
 ---
 
-## 1. What was delivered this session
+## What changed this round (the correction you asked for)
 
-1. **32 app-screen mockups** in a consistent premium style (flagship phone render, dark cinematic `#0F0F0F`,
-   purple→blue `#4A1C6E → #2D6CDF` gradient, coral `#FF6B6B` accent) — `design/mockups/` + a live HTML gallery.
-2. **`design/DESIGN_SYSTEM.md`** — locked color/type/shape/motion tokens + component inventory (the code's source of truth).
-3. **`BUILD_PLAN.md`** — Kotlin/Compose plan mapped to spec phases 0–6.
-4. **A compiling-by-design native Android app** — 5 modules (`app`, `core:designsystem`, `core:domain`, `core:data`, `core:common`),
-   ~60 Kotlin files, all 32 screens as real Compose UI, Hilt DI, Navigation Compose, Supabase adapter, Room + DataStore.
-5. **Supabase migration + RLS** (`supabase/migrations/0001_init.sql`) — full schema with row-level security and count triggers.
-6. **CI workflow** (`.github/workflows/android.yml`) — build + unit tests + APK artifact.
+1. **Frontend only — backend removed.** Supabase, Room, DataStore, and OkHttp are out of the run
+   path. `:core:data` now binds **in-memory mock repositories** behind the same domain interfaces,
+   so the whole app runs fully populated with no network and nothing to configure.
+2. **Apple-level design system.** New stage background (deep charcoal + violet→blue ambient glow),
+   frosted-glass bottom nav, cinematic gradient poster/monogram art (no gray placeholders), tight
+   tracked typography, refined radii and buttons. Applied across all screens.
+3. **Apple-level app icon.** A new gradient wave mark rendered into every mipmap density.
+4. **Apple-level blueprint** (`BLUEPRINT.md`) — the build contract the app is built to match.
 
-## 2. What's real (not faked)
+## What's real
 
-- Auth (sign-up / login / recovery / logout / session persistence) → Supabase GoTrue via OkHttp.
-- Posts / comments / reactions / reposts / bookmarks / follows → Supabase PostgREST.
-- Drama hubs, episodes, cast, watch progress, episode discussions, trending, search, communities, moderation queue → real queries.
-- **Spoiler engine** is a pure domain function (`SpoilerPolicy`) with unit tests — the blur/hide behavior the mockups show is actually driven by watch progress, not hard-coded.
-- **No placeholder data.** When Supabase isn't configured, screens show deliberate `Not configured`/empty states (spec §38, §54) rather than pretend content.
+- **32 screens** as working Compose UI, all populated with believable mock content (dramas, actors,
+  communities, posts, comments, notifications, trending, moderation queue).
+- **Live in-session interactions** — like, bookmark, repost, follow, join, comment, mark-watched,
+  resolve reports all update the UI immediately.
+- **Spoiler engine** (`SpoilerPolicy`) is a pure, unit-tested domain function: blur/hide is driven
+  by watch progress, not hard-coded.
+- **The product flow previews end-to-end**: Splash → Welcome → Sign up / Log in → Onboarding →
+  tabs → every detail screen.
 
-## 3. What's honestly still open
+## What's honestly deferred (on purpose)
 
-| Area | Status | Note |
-|---|---|---|
-| Build verification | ✅ green | GitHub Actions run `34565663911`: `assembleDebug` + `testDebugUnitTest` pass, debug APK artifact uploaded. |
-| Supabase project | ⏳ external | Needs a project + `SUPABASE_URL`/`SUPABASE_ANON_KEY`. Adapter is real; config is documented. |
-| Realtime push | planned | Schema + client ready; live subscriptions not yet bound to ViewModels. |
-| Storage (image upload) | planned | Post model carries `imageUrls`; upload path not wired (image_picker + Storage). |
-| Edge Functions (AI moderation) | planned | Moderation queue exists; AI assist runs server-side later. |
-| Deep links from notifications | partial | In-app navigation wired; manifest intent-filters + FCM pending. |
-| Unit test coverage | domain only | `SpoilerPolicyTest` runs in CI; UI/repo tests are future work. |
-| Light theme / fonts | deferred | Dark-only v1; Inter + Black Han Sans to be bundled (SansSerif fallback now). |
+- Real backend (Supabase) and Realtime/Storage/Edge Functions — by request, deferred; the domain
+  interfaces mean a real backend can be re-added later in one module without touching the UI.
+- Custom font binaries (Black Han Sans / Inter) — the type scale is locked and tracked; bundling
+  licensed font files is a drop-in step.
+- Network imagery — gradient poster art stands in; Coil is wired so real URLs work the moment they
+  exist.
 
-## 3.5 CI build log (live)
+## Status
 
-No Android SDK exists in this sandbox, so GitHub Actions is the compiler of record. The workflow
-(`.github/workflows/android.yml`) writes every Gradle failure back as a check-run annotation, so each error is read
-directly from the API and fixed rather than guessed at.
+| Item | Status |
+|---|---|
+| Build (assembleDebug) | ✅ green in CI |
+| Unit tests (SpoilerPolicy) | ✅ green in CI |
+| APK artifact | ✅ uploaded |
+| Frontend populated (no backend) | ✅ mock catalog |
+| Apple-level design system + icon | ✅ shipped |
 
-| Round | Failure | Root cause | Fix |
-|---|---|---|---|
-| 1 | `:core:designsystem` | smart-cast across module boundary on `post.category` / `post.dramaTitle` (`PostCard.kt`) | local `val`s |
-| 2 | `:core:data` | `Unresolved reference 'contentOrNull'` | add `kotlinx.serialization.json.contentOrNull` import |
-| 3 | `:core:data` | `JsonParsing.*`/`Parsers.*` imported as objects (they are top-level funcs); `map`/`valueOrNull` extensions unimported; `JsonObjectBuilder.putAll` doesn't exist | correct imports; iterate `put(key, value)` instead of `putAll` |
-| 4 | `:app` | missing imports (`Box`, `Icon`, `remember`, `collectAsState`, `getValue`/`setValue`) + `HallyuButton` called with a trailing lambda that bound to `enabled: Boolean` instead of `onClick` | added imports; named-argument button calls |
+## Verdict
 
-**Status: ✅ GREEN.** Run `34565663911` — `Build debug APK` ✅, `Run unit tests` ✅, `Upload APK` ✅
-(artifact `hallyu-debug-apk`, ~18.7 MB). The app compiles end-to-end and the `SpoilerPolicy` unit tests pass in CI.
-
-## 4. Risks & watch-items
-
-1. **First CI run is the real test.** Without a local Android SDK, a version-resolution or a small syntax slip will surface in Actions; I'll iterate on failures until green.
-2. **supabase-kt not used** — hand-rolled OkHttp adapter (fewer exotic deps, fully under control). Can be swapped behind the repository interfaces if preferred.
-3. **PostgREST joins** (`author:profiles(...)`, `drama:dramas(title)`) assume foreign-key naming in the migration; if a column name drifts, mapping silently degrades (not a crash).
-4. **Contrast & icons** — token values set; a real WCAG audit pass and TalkBack walkthrough are still due (Phase 6).
-
-## 5. Verdict
-
-This is a **real, structured foundation with the full product surface**, not a screen mock. The core loop
-(Discover → Follow → Discuss → React) has working repositories and UI end-to-end modulo the external Supabase project.
-The honest gaps are the ones the spec itself gates behind later phases (realtime, storage, Edge Functions, hardening).
-
-Next: wire a Supabase project (`SUPABASE_URL` / `SUPABASE_ANON_KEY`), then run the auth → feed → episode-discussion loop on a device/emulator.
+This is now a **premium, fully-explorable frontend** in the approved mockup language — every screen
+populated, every interaction live, no backend to configure. The honest remaining work is on-device
+polish (spacing/tracking audit) once you preview it, and re-attaching a real backend later if wanted.

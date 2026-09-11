@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.explore
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -49,7 +50,7 @@ import com.hallyu.designsystem.brandGradient
 @Composable
 fun ExploreScreen(navController: NavController, viewModel: ExploreViewModel = hiltViewModel()) {
     val state = viewModel.state
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         Column(Modifier.padding(horizontal = Spacing.lg)) {
             Spacer(Modifier.height(Spacing.sm))
             Row(
@@ -156,7 +157,7 @@ fun SearchResultsScreen(navController: NavController, viewModel: SearchViewModel
     val tabs = listOf("All", "Dramas", "Actors", "People", "Communities", "Posts")
     var tab by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("All") }
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Search", onBack = { navController.popBackStack() })
         Column(Modifier.padding(horizontal = Spacing.lg)) {
             HallyuSearchBar(
@@ -205,7 +206,7 @@ fun HashtagScreen(tag: String, navController: NavController, viewModel: SearchVi
     val state = viewModel.state
     LaunchedEffect(tag) { viewModel.loadHashtag(tag) }
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "#$tag", onBack = { navController.popBackStack() })
         if (state.hashtagLoading && state.hashtagPosts.isEmpty()) {
             LoadingState()

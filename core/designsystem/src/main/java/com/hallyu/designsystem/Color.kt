@@ -3,8 +3,11 @@ package com.hallyu.designsystem
 import androidx.compose.ui.graphics.Color
 
 /**
- * Central color tokens (design/DESIGN_SYSTEM.md §1).
- * Gradient fills must run light-stop-first so white text sits on the blue half (WCAG AA).
+ * Central color tokens (BLUEPRINT.md §2).
+ *
+ * The scene is a deep charcoal stage with a faint violet→blue ambient glow, per the approved
+ * mockup style. Gradient fills always run light-stop-first so white text sits on the blue half
+ * (WCAG AA); coral is used as text/outline, never a fill behind white text.
  */
 object HallyuColors {
     // Brand
@@ -31,4 +34,11 @@ object HallyuColors {
     val Warning = Color(0xFFFBBF24)
     val Info = Color(0xFF38BDF8)
     val Error = Color(0xFFFF6B6B)
+
+    // Scene lighting — the charcoal stage with a violet→blue ambient wash
+    val SceneTop = Color(0xFF181126)
+    val SceneMid = Color(0xFF0F0F10)
+    val SceneBottom = Color(0xFF0D1828)
+    val GlowViolet = Color(0x334A1C6E)
+    val GlowBlue = Color(0x2E2D6CDF)
 }

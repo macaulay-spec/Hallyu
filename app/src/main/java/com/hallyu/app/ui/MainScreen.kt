@@ -1,4 +1,5 @@
 package com.hallyu.app.ui
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -23,7 +24,7 @@ import com.hallyu.designsystem.HallyuColors
 fun MainScreen(navController: NavController) {
     var selected by rememberSaveable { mutableStateOf(0) }
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         Box(Modifier.weight(1f)) {
             when (selected) {
                 0 -> HomeScreen(navController)

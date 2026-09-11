@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.content
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -113,7 +114,7 @@ fun PostDetailScreen(postId: String, navController: NavController, viewModel: Po
     LaunchedEffect(postId) { viewModel.load(postId) }
     val state = viewModel.state
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Post", onBack = { navController.popBackStack() })
         when {
             state.loading && state.post == null -> LoadingState()
@@ -155,7 +156,7 @@ fun CommentsScreen(postId: String, navController: NavController, viewModel: Post
     val state = viewModel.state
     var draft by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Comments", onBack = { navController.popBackStack() })
         CommentList(state.comments, onLike = viewModel::toggleCommentLike, modifier = Modifier.weight(1f))
         Row(

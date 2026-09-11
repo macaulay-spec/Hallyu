@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.notifications
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -103,7 +104,7 @@ data class NotificationsState(
 @Composable
 fun NotificationsScreen(navController: NavController, viewModel: NotificationsViewModel = hiltViewModel()) {
     val state = viewModel.state
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = "Notifications")
         when {
             state.loading && state.items.isEmpty() -> LoadingState()

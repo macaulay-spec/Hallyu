@@ -1,4 +1,5 @@
 package com.hallyu.app.ui.onboarding
+import com.hallyu.designsystem.HallyuScreenBrush
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -228,7 +229,7 @@ fun OnboardingCommunitiesScreen(navController: NavController, viewModel: Onboard
 @Composable
 fun OnboardingCompleteScreen(navController: NavController, viewModel: OnboardingViewModel = hiltViewModel()) {
     Column(
-        modifier = Modifier.fillMaxSize().background(HallyuColors.Background).padding(Spacing.xl),
+        modifier = Modifier.fillMaxSize().background(HallyuScreenBrush).padding(Spacing.xl),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -265,7 +266,7 @@ private fun OnboardingScaffold(
     onBack: () -> Unit,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize().background(HallyuColors.Background)) {
+    Column(modifier = Modifier.fillMaxSize().background(HallyuScreenBrush)) {
         HallyuTopBar(title = title, onBack = onBack)
         Column(
             modifier = Modifier

@@ -1,7 +1,5 @@
 package com.hallyu.app.di
 
-import com.hallyu.app.BuildConfig
-import com.hallyu.data.remote.SupabaseConfig
 import com.hallyu.domain.repository.DramaRepository
 import com.hallyu.domain.repository.ExploreRepository
 import com.hallyu.domain.repository.PostRepository
@@ -19,14 +17,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
-/** Wires app-level config (from BuildConfig) and the use-case layer. */
+/** Wires the use-case layer. Repositories are provided by :core:data (mock catalog). */
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
-    @Provides
-    fun provideSupabaseConfig(): SupabaseConfig =
-        SupabaseConfig(baseUrl = BuildConfig.SUPABASE_URL, anonKey = BuildConfig.SUPABASE_ANON_KEY)
 
     @Provides
     fun provideGetHomeFeed(posts: PostRepository) = GetHomeFeedUseCase(posts)
