@@ -27,7 +27,7 @@
 
 | Area | Status | Note |
 |---|---|---|
-| Build verification | ⏳ in CI | No Android SDK in this sandbox — GitHub Actions is the compiler. Compile errors are being found and fixed iteratively (see CI log below). |
+| Build verification | ✅ green | GitHub Actions run `34565663911`: `assembleDebug` + `testDebugUnitTest` pass, debug APK artifact uploaded. |
 | Supabase project | ⏳ external | Needs a project + `SUPABASE_URL`/`SUPABASE_ANON_KEY`. Adapter is real; config is documented. |
 | Realtime push | planned | Schema + client ready; live subscriptions not yet bound to ViewModels. |
 | Storage (image upload) | planned | Post model carries `imageUrls`; upload path not wired (image_picker + Storage). |
@@ -47,12 +47,10 @@ directly from the API and fixed rather than guessed at.
 | 1 | `:core:designsystem` | smart-cast across module boundary on `post.category` / `post.dramaTitle` (`PostCard.kt`) | local `val`s |
 | 2 | `:core:data` | `Unresolved reference 'contentOrNull'` | add `kotlinx.serialization.json.contentOrNull` import |
 | 3 | `:core:data` | `JsonParsing.*`/`Parsers.*` imported as objects (they are top-level funcs); `map`/`valueOrNull` extensions unimported; `JsonObjectBuilder.putAll` doesn't exist | correct imports; iterate `put(key, value)` instead of `putAll` |
+| 4 | `:app` | missing imports (`Box`, `Icon`, `remember`, `collectAsState`, `getValue`/`setValue`) + `HallyuButton` called with a trailing lambda that bound to `enabled: Boolean` instead of `onClick` | added imports; named-argument button calls |
 
-Additionally swept and fixed the same cross-module smart-cast pattern across `app` (`NotificationsScreen`, `DramaScreens`,
-`WatchingScreen`) and `core:data` (`ProfileRepositoryImpl`) before the compiler even reached them.
-
-**Status at review time:** rounds 1–3 fixes are committed; the round-3 batch is staged locally and awaiting the next
-push + CI run (GitHub authentication dropped mid-session and needs reconnecting in Arena to continue).
+**Status: ✅ GREEN.** Run `34565663911` — `Build debug APK` ✅, `Run unit tests` ✅, `Upload APK` ✅
+(artifact `hallyu-debug-apk`, ~18.7 MB). The app compiles end-to-end and the `SpoilerPolicy` unit tests pass in CI.
 
 ## 4. Risks & watch-items
 
@@ -67,4 +65,4 @@ This is a **real, structured foundation with the full product surface**, not a s
 (Discover → Follow → Discuss → React) has working repositories and UI end-to-end modulo the external Supabase project.
 The honest gaps are the ones the spec itself gates behind later phases (realtime, storage, Edge Functions, hardening).
 
-Next: get CI green, then wire Supabase project + run the auth → feed → episode-discussion loop on a device.
+Next: wire a Supabase project (`SUPABASE_URL` / `SUPABASE_ANON_KEY`), then run the auth → feed → episode-discussion loop on a device/emulator.
