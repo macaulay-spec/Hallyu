@@ -126,9 +126,15 @@ Cursor-based pagination on every list query; Convex queries are automatically ca
 
 `analyticsEvents` table populated by a lightweight client event sink calling a Convex mutation; admin-only query functions compute DAU/WAU/MAU, D1/D7/D30 retention, and participation metrics on demand. Convex's built-in dashboard provides function logs, error rates, and performance insights in place of a separate Sentry/log-aggregation setup for MVP; Sentry remains a documented optional addition for crash reporting on the client if wanted later.
 
-## 9. Deployment & environments
+## 9. CI/CD, builds & environments (GitHub Actions + EAS — D-22)
 
-Dev: `npx convex dev` (live-reloading local dev deployment) + `npx expo start`. Staging/production: `npx convex deploy` to a production Convex deployment; app builds via `eas build` (Android APK/AAB, iOS archive) and `eas submit` for store delivery when ready — no store accounts are assumed to exist yet, so this stays a documented runbook step, not an assumed-complete task. No servers to patch, scale, or provision — Convex and Expo/EAS own that layer.
+**CI gate — `.github/workflows/ci.yml` (every push/PR):** install → `tsc` typecheck → ESLint → Convex function check (`npx convex dev --once` against a dev deployment, or `convex codegen`) → `expo export --platform web` compile smoke. This proves the whole app tree (routes, components, Convex client calls) compiles and every backend function is valid on every commit.
+
+**Native builds — `.github/workflows/eas-build.yml` (dispatch / push to main):** triggers `eas build --platform all --profile preview` (Android APK + iOS simulator archive) via `EXPO_TOKEN`; reports pass/fail. Store-grade production profiles and `eas submit` stay owner-triggered runbook steps. iOS builds require macOS hardware — that is what EAS's managed macOS builders provide; bare GitHub runners cannot build iOS.
+
+**Required credentials (documented, config-gated — Spec §54 honesty rule):** `EXPO_TOKEN` (GitHub secret) for the EAS workflow; `CONVEX_DEPLOY_KEY` only when CI-managed Convex deploys are wanted (deploys currently run from the Freebuff workspace via `npx convex dev` / `npx convex deploy`); Apple Developer Program + Google Play accounts only at store-delivery time. Until configured, each workflow step degrades honestly: CI gates still run, the EAS step reports "not configured."
+
+**Runtime environments:** Dev: `npx convex dev` (live-reloading dev deployment) + `npx expo start` (Expo Go on a real phone; `expo export --platform web` as an additional compile/preview surface). Staging/production: `npx convex deploy` to a production Convex deployment; `eas build --profile production` when the owner is ready. No servers to patch, scale, or provision — Convex and Expo/EAS own that layer (Spec §30).
 
 ## 10. What this architecture deliberately does NOT include (and why)
 

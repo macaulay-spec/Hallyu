@@ -1,6 +1,6 @@
 # Hallyu — Technical Decisions, Assumptions & Spec Conflicts
 
-> **Status:** Revision 2 — stack confirmed by owner (React Native + Expo + Convex, built via Freebuff).
+> **Status:** Revision 3 — stack confirmed by owner (React Native + Expo + Convex); build pipeline confirmed (GitHub Actions + Expo EAS); app name confirmed ("Hallyu").
 > Rule applied (per project instructions): the existing specification is the product contract; nothing below changes product scope or behavior. Where a technical decision must be made, it is stated explicitly with rationale. Where the spec contains an internal conflict or requires an owner call, it is flagged here rather than silently resolved.
 > **Supersedes:** the prior KMP/Ktor/Supabase revision of this document in full. That path was evaluated (see `Hallyu_Stack_Decision_Brief.md`) and replaced by owner decision on 2026-09-12.
 
@@ -18,7 +18,7 @@
 - **Resolution:** **Convex** — a hosted reactive backend (TypeScript server functions + a realtime document database + file storage + scheduling + full-text search), with first-party Expo integration (`npx expo install convex` / EAS-provisioned deployment).
 - **Why the substitution is architecturally faithful to §29's *intent*, not just its letter:** the Spec's Supabase choice is really asking for one thing — "don't hand-build auth/storage/realtime from scratch, use a managed platform that already does it, and keep infrastructure simple (§30)." Convex satisfies that same intent: managed auth (via Convex Auth or a provider like Clerk), managed file storage, and *automatic* realtime — every `useQuery` result updates live when underlying data changes, with no separate WebSocket wiring, cache-invalidation logic, or subscription plumbing to write. For a feed- and discussion-heavy product like Hallyu, this is arguably a **stronger** fit than Supabase's realtime add-on, not a downgrade.
 - **Honest tradeoff (documented, not hidden):** Convex is a **document database with TypeScript query/mutation functions**, not Postgres/SQL. Spec §25's entity list (users, dramas, episodes, posts, comments, communities, etc.) is preserved exactly as a set of Convex tables with `v.id()` references standing in for foreign keys, and indexes declared in the Convex schema file standing in for the Spec's SQL indexes. What changes is the query language and the absence of native SQL joins — multi-entity reads (e.g., "post + author profile + drama context" for a feed item) are composed in TypeScript query functions instead of a SQL join. This is more verbose than SQL for complex joins but is a well-trodden pattern in Convex apps and does not reduce data integrity (Convex transactions are ACID/serializable).
-- **RLS-equivalent:** Convex has no client-side database access at all — every read and write goes through a server-defined function, so authorization is enforced in that function body by construction (stronger default than needing to remember to enable RLS per table). The Spec's §25A "design RLS before exposing tables" intent is satisfied by writing an explicit auth check at the top of every query/mutation; this is documented per-module in `database/policies/POLICIES.md` (kept from the prior revision, rewritten against Convex functions instead of Postgres RLS policies).
+- **RLS-equivalent:** Convex has no client-side database access at all — every read and write goes through a server-defined function, so authorization is enforced in that function body by construction (stronger default than needing to remember to enable RLS per table). The Spec's §25A "design RLS before exposing tables" intent is satisfied by writing an explicit auth check at the top of every query/mutation; the policy matrix is documented per-module in `docs/runbooks/security-policies.md` (written against Convex functions instead of Postgres RLS policies).
 
 ### D-03 — Push notifications
 - **Resolution:** **Expo Notifications** (wraps FCM for Android, APNs for iOS behind one Expo-managed API and one credential flow via `eas credentials`), triggered from Convex scheduled functions/actions on relevant events (new episode, reply, mention, followed-drama update). This still needs real Expo/Apple/Google push credentials before production sends will work — same honesty rule as before: without credentials configured, the system runs in in-app/realtime-only mode (Convex's live queries already cover most "you'd have gotten a push for this" cases while the app is foregrounded) and the setup CLI reports exactly what's missing.
@@ -69,8 +69,14 @@ Report → classification (rule-based, with an optional AI-classifier action hoo
 ### D-17 — Testing: Convex's local dev deployment + a persistent test deployment in CI
 Convex ships a local/dev backend runnable in CI (`npx convex dev` against a disposable deployment, or Convex's testing utilities for isolated function tests). Unit tests cover query/mutation logic (spoiler policy, ranking rules, moderation thresholds) directly against a test deployment — this replaces the prior revision's "real Postgres in CI" requirement with "real Convex deployment in CI," same spirit: no mocked database layer standing in for the real thing.
 
-### D-18 — Build tooling: Freebuff (free AI app builder) driving an Expo + Convex codebase, milestone by milestone
-Freebuff Web's default stack (React + Convex) is steered explicitly toward **Expo + Convex** (native mobile, not the web default) for each milestone, working from `IMPLEMENTATION_PLAN.md`'s phase breakdown rather than one all-at-once prompt. Freebuff runs on open-source models (not frontier-tier), so **owner review of every generated milestone is mandatory** before moving to the next — this is a build-speed decision, not a reason to relax the Spec §39 safety rules or §45 definition-of-done checks, which still apply per feature regardless of which tool wrote the code.
+### D-18 — Build tooling: Freebuff workspace authors the Expo + Convex codebase directly, milestone by milestone
+The Freebuff workspace writes and typechecks the Expo + Convex repository directly (no separate web-first codebase is created). Working from `IMPLEMENTATION_PLAN.md`'s milestone breakdown rather than one all-at-once prompt. During development, `expo export --platform web` (`react-native-web`) serves as a **compile-and-preview surface only** — the product remains the native iOS/Android app; the public website stays out of MVP scope per Spec §21. Owner review of every milestone is mandatory before moving to the next — this is a build-speed decision, not a reason to relax the Spec §39 safety rules or §45 definition-of-done checks, which apply per feature regardless of which tool wrote the code.
+
+### D-22 — CI/CD: GitHub Actions + Expo EAS (owner-confirmed 2026-09-12)
+- **Resolution:** GitHub Actions is the CI gate (typecheck, lint, Convex function check, web-export compile smoke on every push/PR) and the trigger for **EAS Build**, which performs the actual native builds (Android APK/AAB on Linux builders, iOS on macOS builders). Store delivery later via `eas submit`. This resolves Spec §29's CI row ("GitHub Actions + Expo EAS") exactly as written.
+- **Why EAS and not bare GitHub runners:** iOS builds require macOS hardware; EAS provides managed macOS/Linux builders with Expo/Android/iOS toolchains preinstalled, plus credential handling (`eas credentials`) for signing. GitHub-hosted runners alone cannot produce iOS builds.
+- **Required credentials (documented, config-gated — Spec §54 honesty rule):** `EXPO_TOKEN` (GitHub secret) for the workflow to trigger/verify EAS builds; Apple Developer Program + Google Play accounts only when store delivery begins. Until configured, the workflow degrades honestly: CI gates still run, EAS step reports "not configured."
+- **Convex deploys:** done from the Freebuff workspace via `npx convex dev` (dev) / `npx convex deploy` (production). A `CONVEX_DEPLOY_KEY` GitHub secret enables managed deploys from CI later — documented runbook step, not assumed.
 
 ### D-19 — Accessibility (Spec §32): unchanged in requirement, re-targeted to RN
 Semantic `accessibilityLabel`/`accessibilityRole` on every interactive element, correct focus order, 44×44pt (iOS) / 48dp (Android) touch targets, WCAG AA contrast in the NativeWind token file, dynamic type via OS text-scaling support, `useReducedMotion` honored in animated components, captions/alt-text fields present in the composer schema.
@@ -83,7 +89,7 @@ Enforced inside Convex mutations via a token-bucket helper keyed on identity + a
 
 ## C. Assumptions (stated for review)
 
-1. **Owner confirmed the stack change** on 2026-09-12: React Native + Expo + Convex, built with the Freebuff AI app builder. This supersedes assumption 1 of the prior revision (KMP).
+1. **Owner confirmed (2026-09-12):** stack = React Native + Expo + Convex; build pipeline = GitHub Actions + Expo EAS; **app name = "Hallyu"** (E-1 resolved). This supersedes assumption 1 of the prior revision (KMP).
 2. **Spec §20 MVP boundary is still the build scope** — all §21 exclusions respected; v1.1 items appear only as schema fields/honest "coming soon" UI, never as working features.
 3. **Seed demo content** is fictional-only per D-05's new rule; a `--demo` seed script (Convex mutation, run once via CLI) creates demo users, fictional official accounts, communities, posts, and episode discussions. Clearly labeled as demo data, never counted as production data.
 4. **Email verification at signup** is config-gated OFF by default, same as the prior revision — enabled via an env flag when SMTP/Resend is configured.
@@ -105,7 +111,7 @@ Enforced inside Convex mutations via a token-bucket helper keyed on identity + a
 
 ## E. Open questions for the owner (non-blocking — defaults chosen)
 
-1. App display name: **"Hallyu"** — confirm or rename later via one-file change (D-20).
+1. ~~App display name~~ **Resolved:** "Hallyu" confirmed by owner 2026-09-12. Renaming later remains a one-file change (D-20).
 2. Default spoiler preference for new users: **balanced** (unchanged).
 3. Should email verification be **required** before first feed? Default: no (unchanged rationale — friction).
 4. Demo seed content volume: default **moderate** (15 dramas, ~40 demo users incl. fictional official accounts, 8 communities, ~150 posts) — unchanged, now explicitly fictional-only per D-05.

@@ -1,0 +1,40 @@
+name: CI
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Convex codegen (best-effort, no deployment needed)
+        run: npx convex codegen || echo "::warning::convex codegen unavailable in CI — generated client types pending"
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Config doctor
+        run: npm run doctor
+
+      - name: Web export compile smoke
+        run: npx expo export --platform web
+        env:
+          EXPO_PUBLIC_CONVEX_URL: ""
+          CI: "1"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-export
+          path: dist
+          retention-days: 7

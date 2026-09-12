@@ -1,37 +1,43 @@
 # Hallyu — Screen & Navigation Map
 
-> **Status:** Phase 2 deliverable — for review before implementation.
+> **Status:** Phase 2 deliverable — Revision 2 retargeted to Expo Router (React Native + Expo, D-07). For review before implementation.
 > **Basis:** Spec §4 (navigation), §37 (required screens), §38 (states), §34 (onboarding), §18 (notifications deep-link), §7–§19 (screen content requirements), §51 (research-derived UX details).
-> **Companion:** `../blueprints/` images implement this map visually; `IMPLEMENTATION_PLAN.md` §11 maps screens to presenters/repos/APIs/tables.
+> **Companion:** `../blueprints/` images implement this map visually; `IMPLEMENTATION_PLAN.md` §7 maps screens to feature hooks/Convex functions/tables.
 
 ---
 
-## 1. Navigation tree (Voyager)
+## 1. Navigation tree (Expo Router — file-based, `app/` directory)
 
 ```
-AppRoot
-├── SessionGate                       (no UI — restores session or routes)
-│    ├── Splash                       → auto: session valid? MainTabs : Welcome
-│    ├── Welcome / AuthStack
-│    │    ├── Welcome
-│    │    ├── SignUp → VerifyEmailNotice(optional step, config-gated)
-│    │    ├── Login
-│    │    ├── AccountRecovery → RecoverySent
-│    │    └── (from any) → OnboardingStack
-│    ├── OnboardingStack
-│    │    ├── Interests      (multi-select chips: genres/themes)
-│    │    ├── OnboardingDramas   (pick favorite dramas, searchable)
-│    │    ├── OnboardingActors   (pick favorite actors)
-│    │    ├── OnboardingCommunities (recommended communities + official accounts, follow/join)
-│    │    └── OnboardingDone      ("Your feed is ready" → MainTabs)
-│    └── MainTabs (5 tabs — Spec §4)
-│         ├── Tab 1: HomeStack       Home(ForYou|Following) → …
-│         ├── Tab 2: ExploreStack    Explore → Search(overlay) → results → entity pages
-│         ├── Tab 3: CreateSheet     (modal flow, not a tab destination stack)
-│         ├── Tab 4: NotificationsStack  Notifications → deep-linked targets
-│         └── Tab 5: ProfileStack    Profile → subpages
+app/                                   # Expo Router root — mirrors the tree below 1:1
+├── _layout.tsx                        # ConvexProvider, auth/session gate, theme — routes like SessionGate
+├── index.tsx                          # Splash: session valid? → /(tabs) : /(auth)/welcome
+├── (auth)/                            # AuthStack
+│   ├── welcome.tsx
+│   ├── sign-up.tsx
+│   ├── login.tsx
+│   └── account-recovery.tsx           # + recovery-sent state
+├── (onboarding)/                      # OnboardingStack
+│   ├── interests.tsx
+│   ├── dramas.tsx
+│   ├── actors.tsx
+│   ├── communities.tsx
+│   └── done.tsx
+└── (tabs)/                            # MainTabs — 5 tabs (Spec §4); _layout renders the tab bar
+     ├── home/                          # Tab 1: ForYou | Following
+     ├── explore/                       # Tab 2: Explore → SearchOverlay → results
+     ├── create.tsx                     # Tab 3: modal presentation, not a destination stack
+     ├── notifications/                 # Tab 4
+     └── profile/                       # Tab 5: profile → subpages
+app/drama/[slug].tsx                   # Drama hub (pushed from anywhere, deep-link target)
+app/episode/[id].tsx                   # Episode + first-class discussion
+app/post/[id].tsx                      # Post detail + 3-level comments
+app/community/[slug].tsx
+app/user/[handle].tsx
+app/hashtag/[tag].tsx
+app/+not-found.tsx
 ```
-Deep links (`hallyu://` scheme + universal links): `drama/{slug}` · `episode/{id}` · `post/{id}` · `community/{slug}` · `user/{handle}` · `hashtag/{tag}` · `notifications` · `watching` — resolved by `DeepLinkRouter` to the correct stack push, including from cold start (Spec §18/§54).
+Expo Router groups (`(auth)`, `(onboarding)`, `(tabs)`) give the same stack/tab structure the tree describes, with typed routes. Deep links (`hallyu://` scheme + universal links) are native to Expo Router: `drama/{slug}` · `episode/{id}` · `post/{id}` · `community/{slug}` · `user/{handle}` · `hashtag/{tag}` · `notifications` · `watching` — resolved by the router from both a running app and cold start (Spec §18/§54); notification payloads carry the route path directly.
 
 ## 2. Screen catalog (state machine per screen: Loading → Content | Empty | Error(+Retry))
 
@@ -124,4 +130,4 @@ Welcome→SignUp→(Onboarding|Login) ; Login→Onboarding|MainTabs ; Onboarding
 
 ## 4. Platform chrome
 
-Android: Material back-gesture support, edge-to-edge with insets, predictive back where available, splash screen API brand mark. iOS: safe areas, swipe-back per stack, pull-to-refresh haptics, context menus long-press (report/copy link/share). Both: haptic feedback on reaction/follow, dark-first design (light theme also implemented from tokens — theme is centralized), dynamic type scaling honoring OS settings (Spec §32), reduced-motion honoring OS setting (shimmer→static, parallax off).
+Android: Material back-gesture support, edge-to-edge with insets, predictive back where available, splash screen API brand mark. iOS: safe areas, swipe-back per stack, pull-to-refresh haptics, context menus long-press (report/copy link/share). Both: haptic feedback on reaction/follow, dark-first design (light theme also implemented from tokens — theme is centralized), dynamic type scaling honoring OS settings (Spec §32), reduced-motion honoring OS setting (shimmer→static, parallax off). Navigation implementation notes (Expo Router): tab bar shown only inside `(tabs)`; detail screens push onto the root stack so the tab bar hides on push; Create uses `presentation: "modal"` in the tab layout; `+not-found.tsx` catches bad deep links.

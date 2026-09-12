@@ -1,12 +1,17 @@
 # Hallyu — Mobile & Backend Stack Decision Brief
 
+> **⚠️ SUPERSEDED — RETAINED AS HISTORICAL RECORD ONLY.**
+> The decision recorded below (**Kotlin Multiplatform + Ktor**) was replaced by owner decision on **2026-09-12**. The confirmed stack is **React Native + Expo + Convex**, with CI/CD via **GitHub Actions + Expo EAS**.
+> **Current sources of truth:** `DECISIONS.md` (D-01, D-02, D-22) and `IMPLEMENTATION_PLAN.md` (Revision 3).
+> This document is kept only as the written record of *why* the KMP path was considered and what the tradeoffs were. Do not cite this file for current decisions.
+
 **Purpose:** resolve `DECISIONS.md` D-01/D-02, marked "requires owner review." Everything from Phase 0 onward depends on this being a deliberate choice, not an inherited default.
 
 ---
 
 ## Decision
 
-**Confirmed: Kotlin Multiplatform + Compose Multiplatform + self-hosted Ktor.** Owner call. D-01/D-02 in `DECISIONS.md` are resolved — the tradeoff writeup below stays in as the record of why, not as an open question.
+**~~Confirmed: Kotlin Multiplatform + Compose Multiplatform + self-hosted Ktor.~~** *(Superseded 2026-09-12 — see banner above.)* Owner call at the time. D-01/D-02 in `DECISIONS.md` are now resolved differently.
 
 ---
 
@@ -50,13 +55,13 @@ If there's already real backend engineering depth on the team — or a specific 
 
 ## Decisions needed before Phase 0 (consolidated)
 
-1. ~~**Stack** — RN + Expo + Supabase vs. KMP + Ktor.~~ **Resolved: KMP + Ktor.**
-2. **App name** — "Hallyu" locked in, or still open?
-3. **Default spoiler preference** — "balanced" (current DECISIONS.md default).
-4. **Email verification before first feed** — currently off by default.
-5. **Demo seed volume** — ~15 dramas / 40 users / 8 communities / 150 posts (current default).
-6. **Mobile-app-only for v1** — website explicitly out of scope per §0 of the spec; confirm that still matches intent.
-7. **Tagline** — standardize on "Where the Wave Lives" everywhere, or define when variants are intentional (see the blueprint audit, §2).
-8. **Real-name content in the seed dataset** — settle whether real actors/broadcasters appear as "official accounts" with real branding, or the seed data stays fully fictional (see the blueprint audit, §3).
+*(Historical list — current status:)*
 
-Once these are answered, Phase 0 (scaffold) can start without any of them being an unconfirmed default.
+1. ~~**Stack** — RN + Expo + Supabase vs. KMP + Ktor.~~ ~~Resolved: KMP + Ktor~~ → **Superseded 2026-09-12: React Native + Expo + Convex** (`DECISIONS.md` D-01/D-02).
+2. ~~**App name**~~ → **Resolved: "Hallyu" confirmed.**
+3. Default spoiler preference — "balanced" (still the default).
+4. Email verification before first feed — still off by default.
+5. Demo seed volume — ~15 dramas / 40 users / 8 communities / 150 posts (still the default, fictional-only per D-05).
+6. Mobile-app-only for v1 — still out of scope for the public website per §21; the Expo web export is a dev/preview surface only (`DECISIONS.md` D-18).
+7. Tagline — "Where the Wave Lives" (per Spec §35; contextual variants still open per the blueprint audit, §2).
+8. Real-name content in the seed dataset — **Resolved: fictional-only** (`DECISIONS.md` D-05).
