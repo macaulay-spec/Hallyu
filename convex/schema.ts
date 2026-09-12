@@ -68,7 +68,9 @@ export default defineSchema({
     targetType: v.union(v.literal("user"), v.literal("drama"), v.literal("actor")),
     targetId: v.string(), // profiles._id | dramas.slug | actors.slug (polymorphic edge, indexed)
     createdAt: v.number(),
-  }).index("by_follower_target", ["followerId", "targetType", "targetId"]),
+  })
+    .index("by_follower_target", ["followerId", "targetType", "targetId"])
+    .index("by_target", ["targetType", "targetId"]),
 
   blocks: defineTable({
     blockerId: v.id("profiles"),
@@ -175,9 +177,10 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_created", ["createdAt"])
-    .index("by_drama_created", ["dramaId", "createdAt"])
-    .index("by_community_created", ["communityId", "createdAt"])
-    .index("by_author_created", ["authorId", "createdAt"])
+    .index("by_state_created", ["moderationState", "createdAt"])
+    .index("by_drama_state_created", ["dramaId", "moderationState", "createdAt"])
+    .index("by_community_state_created", ["communityId", "moderationState", "createdAt"])
+    .index("by_author_state_created", ["authorId", "moderationState", "createdAt"])
     .searchIndex("search_body", { searchField: "body", filterFields: ["moderationState"] }),
 
   postMedia: defineTable({
@@ -229,7 +232,9 @@ export default defineSchema({
     moderationState: moderationState,
     reactionCount: v.number(),
     createdAt: v.number(),
-  }).index("by_post_created", ["postId", "createdAt"]),
+  })
+    .index("by_post_created", ["postId", "createdAt"])
+    .index("by_post_state_created", ["postId", "moderationState", "createdAt"]),
 
   postReactions: defineTable({
     profileId: v.id("profiles"),

@@ -16,4 +16,5 @@ web-report/
 .env
 .env.*
 !.env.example
+.convex-dev.env
 convex/_generated/
