@@ -1,0 +1,22 @@
+name: Shared KMP CI
+
+on:
+  push:
+    branches: [main, 'feature/**']
+    paths: ['shared/**', 'gradle/**', 'settings.gradle.kts', 'build.gradle.kts', '.github/workflows/shared.yml']
+  pull_request:
+    paths: ['shared/**', 'gradle/**', 'settings.gradle.kts', 'build.gradle.kts', '.github/workflows/shared.yml']
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Build & test shared modules (JVM + metadata)
+        run: ./gradlew :shared:shared-domain:allTests :shared:shared-data:allTests --console=plain

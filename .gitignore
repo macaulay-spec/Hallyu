@@ -1,0 +1,33 @@
+# Hallyu build
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+local.properties
+*.iml
+.idea/
+.kotlin/
+.DS_Store
+
+# Android/iOS
+androidApp/build/
+iosApp/build/
+captures/
+*.apk
+*.aab
+*.ipa
+
+# Backend runtime
+backend/logs/
+*.log
+env/
+.env
+!.env.example
+
+# Never commit secrets or dumps
+database/seed/*.sql.bak
+*.dump
+*.sqlite
+*.db
+
+# CLI jar output
+cli/build/libs/*.jar

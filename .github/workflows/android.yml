@@ -1,0 +1,27 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main, 'feature/**']
+    paths: ['androidApp/**', 'shared/**', 'gradle/**', 'settings.gradle.kts', 'build.gradle.kts', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['androidApp/**', 'shared/**', 'gradle/**', 'settings.gradle.kts', 'build.gradle.kts', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - name: Assemble debug APK
+        run: ./gradlew :androidApp:assembleDebug :shared:shared-domain:allTests --console=plain
+      - name: Upload APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: hallyu-android-apk, path: androidApp/build/outputs/apk/debug/*.apk }
