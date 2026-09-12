@@ -17,4 +17,4 @@ web-report/
 .env.*
 !.env.example
 .convex-dev.env
-convex/_generated/
+# convex/_generated is committed: CI typechecks need it without a deployment
