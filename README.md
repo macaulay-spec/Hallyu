@@ -5,21 +5,24 @@ episode discussion, drama hubs, communities, and a server-enforced spoiler
 system. React Native + Expo + Convex. The product contract is
 `Hallyu_Final_Integrated_Master_Build_Specification (2).md` — untouched.
 
-## Status: M0 (scaffold) — what works now
+## Status: M2 (social core) — what works now
 
-- ✅ Expo (SDK 52) + Expo Router app with the full 5-tab navigation tree and
-  every required route stubbed from `docs/plans/SCREEN_NAVIGATION_MAP.md`
-- ✅ Design system per Spec §35A tokens (dark `#0F0F0F`, gradient
-  `#4A1C6E→#2D6CDF`, coral `#FF6B6B`, Inter, 12px radius, wave loading motif) —
-  centralized in `tailwind.config.js` + `components/ui.tsx` (D-20)
-- ✅ Convex backend wired with a real local deployment, generated client types,
-  schema + health functions (`tsc` clean end-to-end)
-- ✅ Web-export compile smoke passes (`npm run export:web`) — a *verification
-  surface*; the product is the native app
-- ✅ EAS project linked; Android APK build submitted successfully
-- ✅ GitHub Actions CI (`ci.yml`) + EAS build trigger (`eas-build.yml`)
-- ⏳ No real data yet — screens show honest empty/loading states, never fake
-  content (Spec §39). M1 brings the full §25 schema + auth.
+- ✅ **M0:** Expo (SDK 52) + Expo Router 5-tab tree, §35A design system,
+  CI + EAS workflows, brand assets
+- ✅ **M1:** full Spec §25 Convex schema, Convex Auth (email/password,
+  SecureStore sessions), profiles + handles, onboarding wired end-to-end,
+  fictional seed dataset (15 dramas, 8 communities, demo posts)
+- ✅ **M2:** posts (5,000-char composer, categories, drama tagger, spoiler
+  levels, hashtags), spoiler-guarded feeds (For You recent + real Following
+  graph), post detail with server-enforced 3-level comments, optimistic
+  reactions ❤🔥😭😂😱🤍 with rollback, reposts, bookmarks, user follows,
+  blocks/mutes enforced server-side, rate limiting
+- ✅ GitHub Actions CI green on main · EAS project linked (Android APK build
+  verified) · web export compiles (verification surface only)
+- ⏳ Next: **M3** drama hubs + episode discussions + per-user spoiler engine
+  (watch progress) + TMDB adapter. Communities join/moderation is M5.
+- Honest gaps: media upload UI pending storage pipeline; "For You" serves the
+  recent stream (labeled as such) until M4 ranking lands.
 
 ## Commands
 
