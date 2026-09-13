@@ -8,18 +8,26 @@
  * @module
  */
 
+import type * as actors from "../actors.js";
 import type * as auth from "../auth.js";
 import type * as comments from "../comments.js";
+import type * as crons from "../crons.js";
+import type * as dramas from "../dramas.js";
 import type * as engagement from "../engagement.js";
+import type * as episodes from "../episodes.js";
 import type * as health from "../health.js";
 import type * as http from "../http.js";
 import type * as lib_guards from "../lib/guards.js";
 import type * as lib_rateLimit from "../lib/rateLimit.js";
+import type * as lib_spoiler from "../lib/spoiler.js";
 import type * as onboarding from "../onboarding.js";
 import type * as posts from "../posts.js";
 import type * as seed from "../seed.js";
 import type * as social from "../social.js";
+import type * as tmdb from "../tmdb.js";
+import type * as tmdbData from "../tmdbData.js";
 import type * as users from "../users.js";
+import type * as watching from "../watching.js";
 
 import type {
   ApiFromModules,
@@ -28,18 +36,26 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  actors: typeof actors;
   auth: typeof auth;
   comments: typeof comments;
+  crons: typeof crons;
+  dramas: typeof dramas;
   engagement: typeof engagement;
+  episodes: typeof episodes;
   health: typeof health;
   http: typeof http;
   "lib/guards": typeof lib_guards;
   "lib/rateLimit": typeof lib_rateLimit;
+  "lib/spoiler": typeof lib_spoiler;
   onboarding: typeof onboarding;
   posts: typeof posts;
   seed: typeof seed;
   social: typeof social;
+  tmdb: typeof tmdb;
+  tmdbData: typeof tmdbData;
   users: typeof users;
+  watching: typeof watching;
 }>;
 
 /**

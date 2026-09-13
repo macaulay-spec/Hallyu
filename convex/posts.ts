@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError, requireViewer, getViewerProfile } from "./lib/guards";
 import { checkRateLimit } from "./lib/rateLimit";
+import { spoilerGuard, SpoilerDecision } from "./lib/spoiler";
 import { track } from "./onboarding";
 import { Doc, Id } from "./_generated/dataModel";
 
@@ -39,10 +40,25 @@ async function assemble(
     if (d) drama = { slug: d.slug, title: d.title, titleKr: d.titleKr ?? null };
   }
 
-  // Spoiler baseline (§9): tagged content is guarded server-side until the
-  // M3 per-user watch-progress engine refines it. Body never leaves the
-  // server for guarded posts — the client cannot leak what it never received.
-  const guarded = post.spoilerLevel !== "none";
+  // Per-user spoiler engine (M3, D-10): the decision compares the post's
+  // tagging against the viewer's watch progress + spoiler preference. The
+  // body never leaves the server for guarded posts — the client cannot leak
+  // what it never received.
+  const watchRow = viewer && post.dramaId
+    ? await ctx.db
+        .query("watchingStatus")
+        .withIndex("by_profile_drama", (q: any) =>
+          q.eq("profileId", viewer._id).eq("dramaId", post.dramaId)
+        )
+        .first()
+    : null;
+  const decision: SpoilerDecision = spoilerGuard({
+    spoilerLevel: post.spoilerLevel,
+    contentEpisode: post.episodeNumber ?? null,
+    viewerWatchedThrough: watchRow?.watchedThrough ?? null,
+    viewerPreference: viewer?.spoilerPreference ?? "balanced",
+  });
+  const guarded = decision.guarded;
   const viewerReacted = viewer
     ? !!(await ctx.db
         .query("postReactions")
@@ -71,6 +87,7 @@ async function assemble(
     category: post.category,
     body: guarded ? "" : post.body,
     spoilerGuarded: guarded,
+    spoilerReason: decision.reason,
     spoilerLevel: post.spoilerLevel,
     drama,
     episodeNumber: post.episodeNumber ?? null,

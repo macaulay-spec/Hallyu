@@ -21,6 +21,9 @@ jobs:
       - name: Convex codegen (best-effort, no deployment needed)
         run: npx convex codegen || echo "::warning::convex codegen unavailable in CI — generated client types pending"
 
+      - name: Unit tests (spoiler engine matrix)
+        run: npx vitest run
+
       - name: Typecheck
         run: npx tsc --noEmit
 

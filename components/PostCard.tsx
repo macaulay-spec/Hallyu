@@ -21,6 +21,7 @@ export type PostCardData = {
   category: string;
   body: string;
   spoilerGuarded: boolean;
+  spoilerReason?: string;
   spoilerLevel: string;
   drama: { slug: string; title: string; titleKr: string | null } | null;
   episodeNumber: number | null;
@@ -142,6 +143,7 @@ export function PostCard({ post }: { post: PostCardData }) {
           <SpoilerOverlay
             drama={post.drama?.title ?? "This content"}
             episode={post.episodeNumber}
+            watchedThrough={post.spoilerReason === "beyond_progress" ? undefined : null}
             onReveal={onReveal}
           />
         </View>

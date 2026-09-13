@@ -11,6 +11,8 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   "report:create": { max: 10, windowMs: 60_000 },
   "auth:signup": { max: 5, windowMs: 300_000 },
   "follow:toggle": { max: 60, windowMs: 60_000 },
+  "watching:set": { max: 40, windowMs: 60_000 },
+  "episode:watch": { max: 60, windowMs: 60_000 },
 };
 
 export async function checkRateLimit(

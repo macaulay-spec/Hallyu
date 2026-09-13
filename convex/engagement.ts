@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError, requireViewer } from "./lib/guards";
 import { checkRateLimit } from "./lib/rateLimit";
+import { spoilerGuard } from "./lib/spoiler";
 import { track } from "./onboarding";
 import { Doc, Id } from "./_generated/dataModel";
 
@@ -99,24 +100,46 @@ export const toggleRepost = mutation({
   },
 });
 
-// Spoiler reveal (§9, D-10): the guarded body is fetched by an explicit
-// second call and the reveal is audited. The server still checks the
-// caller's watch progress once the M3 engine lands; reveal is always logged.
+// Spoiler reveal (§9, D-10): "Show anyway" is informed consent — reveal is
+// always possible, never silent, and always audited. The M3 engine governs
+// the default presentation (feed/discussion reads); the reveal is the
+// explicit opt-in that logs who saw what, when, and why it was guarded.
 export const revealSpoiler = mutation({
   args: { postId: v.id("posts") },
   handler: async (ctx, { postId }) => {
     const viewer = await requireViewer(ctx);
     const post = await ctx.db.get(postId);
     if (!post) throw new ConvexError("NOT_FOUND");
-    if (post.spoilerLevel === "none") return { body: post.body };
+    if (post.spoilerLevel === "none") return { body: post.body, blocked: false } as const;
+
+    const postDramaId = post.dramaId;
+    const watchRow = postDramaId
+      ? await ctx.db
+          .query("watchingStatus")
+          .withIndex("by_profile_drama", (q) =>
+            q.eq("profileId", viewer._id).eq("dramaId", postDramaId)
+          )
+          .first()
+      : null;
+    const decision = spoilerGuard({
+      spoilerLevel: post.spoilerLevel,
+      contentEpisode: post.episodeNumber ?? null,
+      viewerWatchedThrough: watchRow?.watchedThrough ?? null,
+      viewerPreference: viewer.spoilerPreference,
+    });
 
     await ctx.db.insert("auditLogs", {
       actorId: viewer._id,
       event: "spoiler_reveal",
-      context: JSON.stringify({ postId, spoilerLevel: post.spoilerLevel }),
+      context: JSON.stringify({
+        postId,
+        spoilerLevel: post.spoilerLevel,
+        decision: decision.reason,
+      }),
       createdAt: Date.now(),
     });
-    return { body: post.body };
+
+    return { body: post.body, blocked: false } as const;
   },
 });
 

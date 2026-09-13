@@ -137,7 +137,9 @@ export default defineSchema({
     actorId: v.id("actors"),
     characterName: v.optional(v.string()),
     order: v.number(),
-  }).index("by_drama_order", ["dramaId", "order"]),
+  })
+    .index("by_drama_order", ["dramaId", "order"])
+    .index("by_actor", ["actorId"]),
 
   // ---- Watching / spoiler engine core (Spec §9, §13; §25A explicit progress) ----
   watchingStatus: defineTable({

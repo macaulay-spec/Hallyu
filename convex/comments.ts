@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError, requireViewer } from "./lib/guards";
 import { checkRateLimit } from "./lib/rateLimit";
+import { spoilerGuard } from "./lib/spoiler";
 import { track } from "./onboarding";
 import { Doc } from "./_generated/dataModel";
 
@@ -52,8 +53,9 @@ export const create = mutation({
   },
 });
 
-// Audited comment spoiler reveal (D-10, §9): second explicit call returns
-// the guarded body and writes an audit log entry.
+// Audited comment spoiler reveal (D-10, §9): "Show anyway" consent model —
+// the second explicit call returns the guarded body and writes an audit log
+// entry with the viewer's engine decision for the record.
 export const revealSpoiler = mutation({
   args: { commentId: v.id("comments") },
   handler: async (ctx, { commentId }) => {
@@ -62,10 +64,31 @@ export const revealSpoiler = mutation({
     if (!comment) throw new ConvexError("NOT_FOUND");
     if (comment.spoilerLevel === "none") return { body: comment.body };
 
+    const post = await ctx.db.get(comment.postId);
+    const postDramaId = post?.dramaId;
+    const watchRow = postDramaId
+      ? await ctx.db
+          .query("watchingStatus")
+          .withIndex("by_profile_drama", (q) =>
+            q.eq("profileId", viewer._id).eq("dramaId", postDramaId)
+          )
+          .first()
+      : null;
+    const decision = spoilerGuard({
+      spoilerLevel: comment.spoilerLevel,
+      contentEpisode: post?.episodeNumber ?? null,
+      viewerWatchedThrough: watchRow?.watchedThrough ?? null,
+      viewerPreference: viewer.spoilerPreference,
+    });
+
     await ctx.db.insert("auditLogs", {
       actorId: viewer._id,
       event: "spoiler_reveal_comment",
-      context: JSON.stringify({ commentId, spoilerLevel: comment.spoilerLevel }),
+      context: JSON.stringify({
+        commentId,
+        spoilerLevel: comment.spoilerLevel,
+        decision: decision.reason,
+      }),
       createdAt: Date.now(),
     });
     return { body: comment.body };
@@ -76,6 +99,21 @@ export const listForPost = query({
   args: { postId: v.id("posts") },
   handler: async (ctx, { postId }) => {
     const viewer = await requireViewer(ctx);
+    const post = await ctx.db.get(postId);
+    if (!post) return [];
+
+    // Per-viewer progress against the post's drama (M3 engine).
+    const postDramaId = post.dramaId;
+    const watchRow = postDramaId
+      ? await ctx.db
+          .query("watchingStatus")
+          .withIndex("by_profile_drama", (q) =>
+            q.eq("profileId", viewer._id).eq("dramaId", postDramaId)
+          )
+          .first()
+      : null;
+    const watchedThrough = watchRow?.watchedThrough ?? null;
+
     const rows = await ctx.db
       .query("comments")
       .withIndex("by_post_state_created", (q) =>
@@ -88,21 +126,26 @@ export const listForPost = query({
     for (const c of rows) {
       const author = await ctx.db.get(c.authorId);
       if (!author) continue;
-      const guarded = c.spoilerLevel !== "none";
+      const decision = spoilerGuard({
+        spoilerLevel: c.spoilerLevel,
+        contentEpisode: post.episodeNumber ?? null,
+        viewerWatchedThrough: watchedThrough,
+        viewerPreference: viewer.spoilerPreference,
+      });
       assembled.push({
         _id: c._id,
         postId: c.postId,
         parentCommentId: c.parentCommentId ?? null,
         depth: c.depth,
-        body: guarded ? "" : c.body,
-        spoilerGuarded: guarded,
+        body: decision.guarded ? "" : c.body,
+        spoilerGuarded: decision.guarded,
+        spoilerReason: decision.reason,
         spoilerLevel: c.spoilerLevel,
         reactionCount: c.reactionCount,
         createdAt: c.createdAt,
         author: { handle: author.handle, displayName: author.displayName, verified: author.verified },
       });
     }
-    void viewer;
     return assembled;
   },
 });
