@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError, requireViewer } from "./lib/guards";
 import { checkRateLimit } from "./lib/rateLimit";
+import { notify, notifyMentions } from "./lib/notify";
 import { spoilerGuard } from "./lib/spoiler";
 import { track } from "./onboarding";
 import { Doc } from "./_generated/dataModel";
@@ -22,6 +23,9 @@ export const create = mutation({
 
     const post = await ctx.db.get(postId);
     if (!post || post.moderationState !== "visible") throw new ConvexError("NOT_FOUND");
+    // Locked threads (community moderator action, §14) refuse new comments,
+    // enforced server-side so a stale client cannot bypass it.
+    if (post.locked) throw new ConvexError("POST_LOCKED");
 
     const text = body.trim();
     if (text.length === 0) throw new ConvexError("COMMENT_EMPTY");
@@ -49,6 +53,33 @@ export const create = mutation({
 
     await ctx.db.patch(postId, { commentCount: post.commentCount + 1 });
     await track(ctx, viewer._id, "comment_created");
+
+    // Realtime notification fan-out (§18): the post author learns about a reply
+    // on their post, the parent comment author learns about a reply to them,
+    // and mentions are always critical. Never to yourself.
+    const route = `/post/${postId}`;
+    if (post.authorId !== viewer._id) {
+      await notify(ctx, {
+        recipientId: post.authorId,
+        category: "critical",
+        type: parentCommentId ? "comment_reply" : "post_reply",
+        route,
+        text: `@${viewer.handle} ${parentCommentId ? "replied in a thread on" : "commented on"} your post`,
+      });
+    }
+    if (parentCommentId) {
+      const parent = await ctx.db.get(parentCommentId);
+      if (parent && parent.authorId !== viewer._id) {
+        await notify(ctx, {
+          recipientId: parent.authorId,
+          category: "critical",
+          type: "comment_reply",
+          route,
+          text: `@${viewer.handle} replied to your comment`,
+        });
+      }
+    }
+    await notifyMentions(ctx, { actorId: viewer._id, body: text, route });
     return { commentId };
   },
 });

@@ -13,6 +13,8 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   "follow:toggle": { max: 60, windowMs: 60_000 },
   "watching:set": { max: 40, windowMs: 60_000 },
   "episode:watch": { max: 60, windowMs: 60_000 },
+  "community:join": { max: 20, windowMs: 60_000 },
+  "community:create": { max: 3, windowMs: 3_600_000 },
 };
 
 export async function checkRateLimit(

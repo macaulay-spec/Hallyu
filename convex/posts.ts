@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError, requireViewer, getViewerProfile } from "./lib/guards";
 import { checkRateLimit } from "./lib/rateLimit";
+import { notifyMentions } from "./lib/notify";
 import { spoilerGuard, SpoilerDecision } from "./lib/spoiler";
 import { track } from "./onboarding";
 import { Doc, Id } from "./_generated/dataModel";
@@ -15,7 +16,7 @@ const MAX_BODY = 5000; // Spec §10
 
 // Assemble the read-model for a post: author + drama context. Used by every
 // stream so the client renders one PostCard shape everywhere.
-async function assemble(
+export async function assemble(
   ctx: { db: any },
   post: Doc<"posts">,
   viewer: Doc<"profiles"> | null
@@ -102,6 +103,12 @@ async function assemble(
     viewerReacted,
     viewerBookmarked,
   };
+}
+
+/** Drops nulls (blocked authors, deleted rows) and narrows the type so the
+ * client never has to juggle `| null` items from a stream. */
+export function compact<T>(rows: Array<T | null>): T[] {
+  return rows.filter((row): row is T => row !== null);
 }
 
 export const create = mutation({
@@ -192,6 +199,28 @@ export const create = mutation({
 
     await ctx.db.patch(viewer._id, { postCount: viewer.postCount + 1 });
     await track(ctx, viewer._id, "post_created", args.category);
+
+    // Mentions are critical notifications (§18) and deep-link to the post.
+    await notifyMentions(ctx, { actorId: viewer._id, body, route: `/post/${postId}` });
+    // Episode discussions are first-class (§8): a post tagged to an episode bumps
+    // that episode's discussion activity so the Episode Activity rail is real.
+    if (dramaId && episodeNumber) {
+      const episode = await ctx.db
+        .query("episodes")
+        .withIndex("by_drama_number", (q) =>
+          q.eq("dramaId", dramaId!).eq("number", episodeNumber)
+        )
+        .first();
+      if (episode?.discussionId) {
+        const discussion = await ctx.db.get(episode.discussionId);
+        if (discussion) {
+          await ctx.db.patch(discussion._id, {
+            postCount: discussion.postCount + 1,
+            lastActivityAt: Date.now(),
+          });
+        }
+      }
+    }
     return { postId };
   },
 });
@@ -226,7 +255,7 @@ export const listRecent = query({
       .order("desc")
       .take(Math.min(limit, 50));
     const assembled = await Promise.all(posts.map((p) => assemble(ctx, p, viewer)));
-    return assembled.filter(Boolean);
+    return compact(assembled);
   },
 });
 
@@ -313,7 +342,7 @@ export const listByDrama = query({
       .order("desc")
       .take(Math.min(limit, 50));
     const assembled = await Promise.all(posts.map((p) => assemble(ctx, p, viewer)));
-    return assembled.filter(Boolean);
+    return compact(assembled);
   },
 });
 
@@ -338,7 +367,7 @@ export const listByHashtag = query({
         return await assemble(ctx, p, viewer);
       })
     );
-    return assembled.filter(Boolean).sort((a, b) => (b!.createdAt ?? 0) - (a!.createdAt ?? 0));
+    return compact(assembled).sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 
@@ -359,6 +388,6 @@ export const listByAuthor = query({
       .order("desc")
       .take(Math.min(limit, 50));
     const assembled = await Promise.all(posts.map((p) => assemble(ctx, p, viewer)));
-    return assembled.filter(Boolean);
+    return compact(assembled);
   },
 });

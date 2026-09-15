@@ -22,6 +22,7 @@ const WATCH_STATUSES = [
 export default function DramaHub() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [tab, setTab] = useState<"episodes" | "posts">("episodes");
+  const [actionNote, setActionNote] = useState<string | null>(null);
 
   const drama = useQuery(
     api.dramas.getBySlug,
@@ -37,6 +38,8 @@ export default function DramaHub() {
   );
 
   const toggleFollow = useMutation(api.dramas.toggleFollow);
+  const muteDrama = useMutation(api.social.mute);
+  const setNotificationPref = useMutation(api.notifications.setPreference);
   const setStatus = useMutation(api.watching.setStatus);
   const syncProgress = useMutation(api.watching.syncWatchedEpisodes);
 
@@ -118,6 +121,47 @@ export default function DramaHub() {
               </T>
             ) : null}
           </Row>
+
+          {/* Per-drama controls (§18 mute drama, per-drama notification settings) */}
+          <Row className="mt-2 flex-wrap">
+            <Button
+              label="Mute drama"
+              variant="secondary"
+              size="sm"
+              className="mr-2 mt-2"
+              onPress={async () => {
+                try {
+                  await muteDrama({ targetType: "drama", targetId: drama.slug });
+                  setActionNote("Muted — this drama is filtered out of your feeds. Undo in Settings → Privacy.");
+                } catch {
+                  setActionNote("Couldn't mute that right now.");
+                }
+              }}
+            />
+            <Button
+              label="Mute episode notices"
+              variant="secondary"
+              size="sm"
+              className="mt-2"
+              onPress={async () => {
+                try {
+                  await setNotificationPref({
+                    category: "critical",
+                    enabled: false,
+                    targetId: drama.slug,
+                  });
+                  setActionNote("Episode release notifications off for this drama. Re-enable in Settings → Notifications.");
+                } catch {
+                  setActionNote("Couldn't update that preference right now.");
+                }
+              }}
+            />
+          </Row>
+          {actionNote ? (
+            <T variant="tertiary" className="mt-2">
+              {actionNote}
+            </T>
+          ) : null}
         </View>
 
         {/* Spoiler boundary banner (§9) */}

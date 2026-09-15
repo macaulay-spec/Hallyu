@@ -171,6 +171,10 @@ export default defineSchema({
     communityId: v.optional(v.id("communities")),
     repostOfId: v.optional(v.id("posts")),
     moderationState: moderationState,
+    // Community moderator powers (Spec §14): pinned announcements + locked
+    // threads. Set only through communities.* mutations (role-gated server-side).
+    pinned: v.optional(v.boolean()),
+    locked: v.optional(v.boolean()),
     official: v.boolean(),
     reactionCount: v.number(),
     commentCount: v.number(),
@@ -361,10 +365,27 @@ export default defineSchema({
     status: v.union(v.literal("open"), v.literal("resolved"), v.literal("dismissed")),
     severity: v.optional(v.string()),
     aiClass: v.optional(v.string()),
+    autoAction: v.optional(v.string()),
     decidedBy: v.optional(v.id("profiles")),
     decidedAt: v.optional(v.number()),
+    // Appeal path (Spec §27): the affected user may appeal a decision once.
+    appealedAt: v.optional(v.number()),
+    appealNote: v.optional(v.string()),
+    appealStatus: v.optional(
+      v.union(v.literal("pending"), v.literal("upheld"), v.literal("reversed"))
+    ),
     createdAt: v.number(),
-  }).index("by_status", ["status", "createdAt"]),
+  })
+    .index("by_status", ["status", "createdAt"])
+    .index("by_target", ["targetType", "targetId"]),
+
+  // Platform roles (Spec §26): kept strictly separate from community roles and
+  // from verification badges (D-14). Admin/moderation surfaces are gated here.
+  platformRoles: defineTable({
+    profileId: v.id("profiles"),
+    role: v.union(v.literal("platform_moderator"), v.literal("admin")),
+    grantedAt: v.number(),
+  }).index("by_profile", ["profileId"]),
 
   moderationActions: defineTable({
     moderatorId: v.id("profiles"),

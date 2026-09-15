@@ -2,6 +2,7 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError, requireViewer } from "./lib/guards";
 import { checkRateLimit } from "./lib/rateLimit";
+import { assemble, compact } from "./posts";
 import { spoilerGuard } from "./lib/spoiler";
 import { track } from "./onboarding";
 import { Doc, Id } from "./_generated/dataModel";
@@ -153,5 +154,27 @@ export const listBookmarkedIds = query({
       .order("desc")
       .take(50);
     return rows.map((r) => r.postId);
+  },
+});
+
+// Saved posts read model (SCREEN_NAVIGATION_MAP #28). Same assemble() path as
+// every other stream, so spoiler guarding applies identically here.
+export const listBookmarked = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit = 30 }) => {
+    const viewer = await requireViewer(ctx);
+    const rows = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_profile_created", (q) => q.eq("profileId", viewer._id))
+      .order("desc")
+      .take(Math.min(limit, 50));
+    const out = [];
+    for (const row of rows) {
+      const post = await ctx.db.get(row.postId);
+      if (!post || post.moderationState === "removed") continue;
+      const assembled = await assemble(ctx, post, viewer);
+      if (assembled) out.push(assembled);
+    }
+    return compact(out);
   },
 });

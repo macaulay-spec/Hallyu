@@ -46,6 +46,40 @@ export async function requireCommunityModerator(
   return membership;
 }
 
+// Platform roles (Spec §26) are read from their own table — a community
+// moderator never inherits platform powers, and a verified badge grants
+// nothing (D-14). Used by the moderation queue and admin aggregates.
+export async function viewerPlatformRole(
+  ctx: QueryCtx | MutationCtx
+): Promise<"platform_moderator" | "admin" | null> {
+  const profile = await getViewerProfile(ctx);
+  if (!profile) return null;
+  const rows = await ctx.db
+    .query("platformRoles")
+    .withIndex("by_profile", (q) => q.eq("profileId", profile._id))
+    .collect();
+  if (rows.some((r) => r.role === "admin")) return "admin";
+  if (rows.some((r) => r.role === "platform_moderator")) return "platform_moderator";
+  return null;
+}
+
+export async function requirePlatformModerator(
+  ctx: QueryCtx | MutationCtx
+): Promise<Doc<"profiles">> {
+  const viewer = await requireViewer(ctx);
+  const role = await viewerPlatformRole(ctx);
+  if (!role) throw new ConvexError("FORBIDDEN");
+  return viewer;
+}
+
+export async function requireAdmin(
+  ctx: QueryCtx | MutationCtx
+): Promise<Doc<"profiles">> {
+  const viewer = await requireViewer(ctx);
+  if ((await viewerPlatformRole(ctx)) !== "admin") throw new ConvexError("FORBIDDEN");
+  return viewer;
+}
+
 export class ConvexError extends Error {
   code: string;
   constructor(code: string) {

@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { Link } from "expo-router";
-import { Pressable, View } from "react-native";
-import { Card, Row, T, Button, SpoilerOverlay, cn } from "@/components/ui";
+import { Modal, Pressable, Share, View } from "react-native";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Doc, Id } from "@/convex/_generated/dataModel";
+import { Id } from "@/convex/_generated/dataModel";
+import { Avatar, Badge, Button, Card, Row, SpoilerOverlay, T, cn } from "@/components/ui";
+import { errorCopy } from "@/lib/copy";
+
+// PostCard — the shared feed unit (Spec §51 "Home feed" + SCREEN_NAVIGATION_MAP
+// "PostCard"). Everything it shows is a real value from the server read model;
+// guarded bodies arrive empty and only the audited reveal can fetch them.
 
 const REACTIONS = [
   { kind: "heart", glyph: "❤️" },
@@ -14,6 +19,13 @@ const REACTIONS = [
   { kind: "shock", glyph: "😱" },
   { kind: "white_heart", glyph: "🤍" },
 ] as const;
+
+const SPOILER_REASON: Record<string, string> = {
+  explicit_tag: "the author tagged this as major spoilers",
+  beyond_progress: "it goes past your watch progress",
+  strict_preference: "your spoiler protection is set to Strict",
+  no_progress_context: "no watch progress is recorded for this drama yet",
+};
 
 export type PostCardData = {
   _id: Id<"posts">;
@@ -33,6 +45,10 @@ export type PostCardData = {
   createdAt: number;
   viewerReacted: boolean;
   viewerBookmarked: boolean;
+  /** Feeds attach the ranking signal that surfaced this item (§17). */
+  reason?: string;
+  pinned?: boolean;
+  locked?: boolean;
 };
 
 function timeAgo(ts: number): string {
@@ -42,61 +58,99 @@ function timeAgo(ts: number): string {
   if (m < 60) return `${m}m`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  return new Date(ts).toISOString().slice(0, 10);
 }
 
-export function PostCard({ post }: { post: PostCardData }) {
+const CATEGORY_LABEL: Record<string, string> = {
+  reaction: "Reaction",
+  discussion: "Discussion",
+  theory: "Theory",
+  recommendation: "Recommendation",
+  meme: "Meme",
+  news: "News",
+  question: "Question",
+  fan_content: "Fan content",
+};
+
+export function PostCard({
+  post,
+  showReason = false,
+  onReport,
+}: {
+  post: PostCardData;
+  showReason?: boolean;
+  onReport?: (post: PostCardData) => void;
+}) {
   const [revealed, setRevealed] = useState(false);
   const [body, setBody] = useState(post.body);
-  const [reacted, setReacted] = useState(post.viewerReacted);
+  const [reaction, setReaction] = useState<string | null>(null);
   const [reactionCount, setReactionCount] = useState(post.reactionCount);
   const [bookmarked, setBookmarked] = useState(post.viewerBookmarked);
   const [bookmarkCount, setBookmarkCount] = useState(post.bookmarkCount);
   const [reposted, setReposted] = useState(false);
   const [repostCount, setRepostCount] = useState(post.repostCount);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const toggleReaction = useMutation(api.engagement.toggleReaction);
   const toggleBookmark = useMutation(api.engagement.toggleBookmark);
   const toggleRepost = useMutation(api.engagement.toggleRepost);
   const revealSpoiler = useMutation(api.engagement.revealSpoiler);
+  const block = useMutation(api.social.block);
+  const mute = useMutation(api.social.mute);
 
+  function flash(message: string) {
+    setToast(message);
+    setTimeout(() => setToast(null), 2200);
+  }
+
+  // Optimistic updates with honest rollback (Spec §31).
   async function onReaction(kind: string) {
-    // Optimistic update with server rollback (Spec §31).
-    setReacted((prev) => !prev);
-    setReactionCount((c) => (reacted ? Math.max(0, c - 1) : c + 1));
+    const wasActive = reaction === kind;
+    const prevReaction = reaction;
+    const prevCount = reactionCount;
+    setReaction(wasActive ? null : kind);
+    setReactionCount(wasActive ? Math.max(0, prevCount - 1) : prevCount + (prevReaction ? 0 : 1));
     try {
       const res = await toggleReaction({ postId: post._id, kind: kind as never });
-      setReacted(res.active);
+      setReaction(res.active ? kind : null);
       setReactionCount(res.reactionCount);
-    } catch {
-      setReacted(reacted);
-      setReactionCount(reactionCount);
+    } catch (e) {
+      setReaction(prevReaction);
+      setReactionCount(prevCount);
+      flash(errorCopy(e instanceof Error && e.message.includes("RATE") ? "RATE_LIMITED" : "UNKNOWN").title);
     }
   }
 
   async function onBookmark() {
-    setBookmarked((p) => !p);
-    setBookmarkCount((c) => (bookmarked ? Math.max(0, c - 1) : c + 1));
+    const prev = bookmarked;
+    const prevCount = bookmarkCount;
+    setBookmarked(!prev);
+    setBookmarkCount(prev ? Math.max(0, prevCount - 1) : prevCount + 1);
     try {
       const res = await toggleBookmark({ postId: post._id });
       setBookmarked(res.bookmarked);
       setBookmarkCount(res.bookmarkCount);
     } catch {
-      setBookmarked(bookmarked);
-      setBookmarkCount(bookmarkCount);
+      setBookmarked(prev);
+      setBookmarkCount(prevCount);
     }
   }
 
   async function onRepost() {
-    setReposted((p) => !p);
-    setRepostCount((c) => (reposted ? Math.max(0, c - 1) : c + 1));
+    const prev = reposted;
+    const prevCount = repostCount;
+    setReposted(!prev);
+    setRepostCount(prev ? Math.max(0, prevCount - 1) : prevCount + 1);
     try {
       const res = await toggleRepost({ postId: post._id });
       setReposted(res.reposted);
       setRepostCount(res.repostCount);
     } catch {
-      setReposted(reposted);
-      setRepostCount(repostCount);
+      setReposted(prev);
+      setRepostCount(prevCount);
     }
   }
 
@@ -106,80 +160,198 @@ export function PostCard({ post }: { post: PostCardData }) {
       setBody(res.body);
       setRevealed(true);
     } catch {
-      // reveal failed; stay guarded
+      flash("Couldn't load this right now.");
+    }
+  }
+
+  async function onShare() {
+    try {
+      await Share.share({ message: `hallyu://post/${post._id}` });
+    } catch {
+      // Web has no system share sheet — say so rather than fail silently.
+      flash("Sharing isn't available on this platform yet.");
+    }
+  }
+
+  async function onBlock() {
+    setMenuOpen(false);
+    try {
+      await block({ handle: post.author.handle });
+      flash(`Blocked @${post.author.handle}. Their posts are hidden from you.`);
+    } catch {
+      flash("Couldn't block that account right now.");
+    }
+  }
+
+  async function onMute() {
+    setMenuOpen(false);
+    try {
+      await mute({ targetType: "user", targetId: post.author.handle });
+      flash(`Muted @${post.author.handle} in your feeds.`);
+    } catch {
+      flash("Couldn't mute that account right now.");
     }
   }
 
   return (
     <Card className="mx-4 mb-3 p-4">
-      <Row className="justify-between">
-        <Link href={`/user/${post.author.handle}`} asChild>
-          <Pressable>
-            <Row>
-              <T variant="h3">{post.author.displayName}</T>
-              {post.author.verified ? <T variant="brand"> · verified</T> : null}
-              {post.official ? <T variant="coral"> · official</T> : null}
-            </Row>
-            <T variant="tertiary">@{post.author.handle} · {timeAgo(post.createdAt)}</T>
-          </Pressable>
-        </Link>
-        <T variant="tertiary">{post.category}</T>
+      {showReason && post.reason ? (
+        <T variant="brand" className="mb-2">
+          ✦ {post.reason}
+        </T>
+      ) : null}
+
+      <Row className="justify-between items-start">
+        <Row className="flex-1 pr-2">
+          <Link href={`/user/${post.author.handle}`} asChild>
+            <Pressable accessibilityRole="button" accessibilityLabel={`@${post.author.handle}`}>
+              <Avatar name={post.author.displayName} size={36} />
+            </Pressable>
+          </Link>
+          <View className="ml-3 flex-1">
+            <Link href={`/user/${post.author.handle}`} asChild>
+              <Pressable className="flex-row items-center flex-wrap">
+                <T variant="h3">{post.author.displayName}</T>
+                {post.author.verified ? <Badge label="VERIFIED" tone="brand" className="ml-2" /> : null}
+                {post.official ? <Badge label="OFFICIAL" tone="coral" className="ml-2" /> : null}
+              </Pressable>
+            </Link>
+            <T variant="tertiary">
+              @{post.author.handle} · {timeAgo(post.createdAt)}
+            </T>
+          </View>
+        </Row>
+        <Pressable
+          onPress={() => setMenuOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Post options"
+          className="px-1"
+        >
+          <T variant="tertiary">⋯</T>
+        </Pressable>
       </Row>
 
-      {post.drama ? (
-        <Row className="mt-2">
+      <Row className="mt-2.5 flex-wrap items-center">
+        {post.pinned ? <Badge label="PINNED" tone="brand" className="mr-2" /> : null}
+        {post.locked ? <Badge label="LOCKED" tone="warn" className="mr-2" /> : null}
+        <Badge label={CATEGORY_LABEL[post.category] ?? post.category} tone="muted" className="mr-2" />
+        {post.drama ? (
           <Link href={`/drama/${post.drama.slug}`} asChild>
-            <Pressable className="rounded-full bg-card-elevated px-3 py-1">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${post.drama.title}${post.episodeNumber ? ` episode ${post.episodeNumber}` : ""}`}
+              className="rounded-full bg-card-elevated px-3 py-1"
+            >
               <T variant="tertiary">
-                📺 {post.drama.title}{post.episodeNumber ? ` · Ep ${post.episodeNumber}` : ""}
+                📺 {post.drama.title}
+                {post.episodeNumber ? ` · Ep ${post.episodeNumber}` : ""}
               </T>
             </Pressable>
           </Link>
-        </Row>
-      ) : null}
+        ) : null}
+      </Row>
 
       {post.spoilerGuarded && !revealed ? (
         <View className="mt-3">
           <SpoilerOverlay
-            drama={post.drama?.title ?? "This content"}
+            drama={post.drama?.title ?? "This post"}
             episode={post.episodeNumber}
-            watchedThrough={post.spoilerReason === "beyond_progress" ? undefined : null}
+            note={SPOILER_REASON[post.spoilerReason ?? ""] ?? "it may reveal plot details"}
             onReveal={onReveal}
           />
         </View>
       ) : (
-        <T variant="body" className="mt-3">
-          {revealed ? `⚠️ ${body}` : body}
-        </T>
+        <Link href={`/post/${post._id}`} asChild>
+          <Pressable accessibilityRole="button">
+            <T variant="body" className="mt-3 leading-6">
+              {revealed ? `⚠️ ${body}` : body}
+            </T>
+          </Pressable>
+        </Link>
       )}
 
+      {post.locked ? (
+        <T variant="tertiary" className="mt-2">
+          🔒 Comments are closed on this post (moderator lock).
+        </T>
+      ) : null}
+
       <Row className="mt-3 justify-between">
-        <Row>
-          {REACTIONS.slice(0, 4).map((r) => (
+        <Row className="flex-wrap">
+          {REACTIONS.map((r) => (
             <Pressable
               key={r.kind}
               onPress={() => onReaction(r.kind)}
-              className={cn("mr-2 rounded-full px-2 py-1", reacted && r.kind === "heart" ? "bg-brand" : "")}
+              accessibilityRole="button"
+              accessibilityLabel={`React ${r.kind.replace("_", " ")}`}
+              className={cn(
+                "mr-1.5 rounded-full px-2 py-1.5",
+                reaction === r.kind ? "bg-brand" : "bg-card-elevated"
+              )}
             >
               <T variant="secondary">{r.glyph}</T>
             </Pressable>
           ))}
-          {reactionCount > 0 ? <T variant="tertiary">{reactionCount}</T> : null}
         </Row>
         <Row>
           <Link href={`/post/${post._id}`} asChild>
-            <Pressable className="mr-3">
+            <Pressable accessibilityRole="button" accessibilityLabel="Comments" className="mr-3">
               <T variant="tertiary">💬 {post.commentCount}</T>
             </Pressable>
           </Link>
-          <Pressable onPress={onRepost} className="mr-3">
-            <T variant="tertiary">{reposted ? "🔁" : "↻"} {repostCount}</T>
+          <Pressable
+            onPress={onRepost}
+            accessibilityRole="button"
+            accessibilityLabel="Repost"
+            className="mr-3"
+          >
+            <T variant="tertiary">
+              {reposted ? "🔁" : "↻"} {repostCount}
+            </T>
           </Pressable>
-          <Pressable onPress={onBookmark}>
-            <T variant="tertiary">{bookmarked ? "🔖" : "📑"} {bookmarkCount}</T>
+          <Pressable onPress={onBookmark} accessibilityRole="button" accessibilityLabel="Bookmark" className="mr-3">
+            <T variant="tertiary">
+              {bookmarked ? "🔖" : "📑"} {bookmarkCount}
+            </T>
+          </Pressable>
+          <Pressable onPress={onShare} accessibilityRole="button" accessibilityLabel="Share">
+            <T variant="tertiary">↗</T>
           </Pressable>
         </Row>
       </Row>
+
+      {reactionCount > 0 || post.commentCount > 0 ? (
+        <T variant="tertiary" className="mt-2">
+          {reactionCount > 0 ? `${reactionCount} reactions` : ""}
+          {reactionCount > 0 && post.commentCount > 0 ? " · " : ""}
+          {post.commentCount > 0 ? `${post.commentCount} comments` : ""}
+        </T>
+      ) : null}
+
+      {toast ? (
+        <View className="mt-2 rounded-[12px] bg-card-elevated px-3 py-2">
+          <T variant="secondary">{toast}</T>
+        </View>
+      ) : null}
+
+      <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
+        <Pressable className="flex-1 bg-black/60" onPress={() => setMenuOpen(false)} />
+        <View className="absolute bottom-0 left-0 right-0 rounded-t-[20px] border border-line bg-surface p-4 pb-8">
+          <T variant="h3">Post options</T>
+          <Button
+            variant="secondary"
+            label="Report post"
+            className="mt-4"
+            onPress={() => {
+              setMenuOpen(false);
+              onReport?.(post);
+            }}
+          />
+          <Button variant="secondary" label={`Mute @${post.author.handle}`} className="mt-2" onPress={onMute} />
+          <Button variant="secondary" label={`Block @${post.author.handle}`} className="mt-2" onPress={onBlock} />
+          <Button variant="ghost" label="Cancel" className="mt-3" onPress={() => setMenuOpen(false)} />
+        </View>
+      </Modal>
     </Card>
   );
 }

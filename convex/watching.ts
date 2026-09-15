@@ -137,6 +137,12 @@ export const listMine = query({
     for (const row of rows) {
       const drama = await ctx.db.get(row.dramaId);
       if (!drama) continue;
+      // Episode count lets the progress stepper clamp honestly instead of
+      // letting a user "watch" episode 40 of a 16-episode drama.
+      const episodes = await ctx.db
+        .query("episodes")
+        .withIndex("by_drama_number", (q) => q.eq("dramaId", drama._id))
+        .collect();
       out.push({
         dramaSlug: drama.slug,
         title: drama.title,
@@ -144,6 +150,8 @@ export const listMine = query({
         status: row.status,
         watchedThrough: row.watchedThrough,
         dramaStatus: drama.status,
+        episodeCount: episodes.length,
+        latestEpisode: episodes.reduce((max, e) => Math.max(max, e.number), 0),
         updatedAt: row.updatedAt,
       });
     }

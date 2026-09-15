@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -9,17 +9,12 @@ import { ReportSheet, ReportTarget } from "@/components/ReportSheet";
 import { EXPO_PUBLIC_CONVEX_URL } from "@/lib/brand";
 import { EMPTY_COPY } from "@/lib/copy";
 
-// Hashtag page (SCREEN_NAVIGATION_MAP #20, Spec §16). The tag stream is the same
-// spoiler-guarded post read model the feeds use, so guarded bodies never arrive
-// here either.
-
-export default function HashtagPage() {
-  const { tag } = useLocalSearchParams<{ tag: string }>();
+// Saved posts (SCREEN_NAVIGATION_MAP #28). Bookmarks are read back through the
+// same spoiler-guarded assembly as every other stream.
+export default function Saved() {
   const router = useRouter();
   const [report, setReport] = useState<ReportTarget | null>(null);
-  const clean = (tag ?? "").replace(/^#/, "").toLowerCase();
-
-  const posts = useQuery(api.posts.listByHashtag, EXPO_PUBLIC_CONVEX_URL ? { tag: clean, limit: 40 } : "skip");
+  const saved = useQuery(api.engagement.listBookmarked, EXPO_PUBLIC_CONVEX_URL ? { limit: 40 } : "skip");
 
   return (
     <Screen>
@@ -27,6 +22,12 @@ export default function HashtagPage() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="px-4 pt-14">
           <Row className="justify-between">
+            <View>
+              <T variant="h1">Saved</T>
+              <T variant="tertiary">
+                {saved === undefined ? "Loading…" : `${saved.length} saved`}
+              </T>
+            </View>
             <Pressable
               onPress={() => router.back()}
               accessibilityRole="button"
@@ -36,23 +37,19 @@ export default function HashtagPage() {
               <T variant="secondary">‹</T>
             </Pressable>
           </Row>
-          <T variant="h1" className="mt-4">
-            #{clean}
-          </T>
-          <T variant="tertiary" className="mt-1">
-            {posts === undefined
-              ? "Loading posts…"
-              : `${posts.length} ${posts.length === 1 ? "post" : "posts"}`}
-          </T>
         </View>
 
         <View className="mt-4">
-          {posts === undefined ? (
+          {saved === undefined ? (
             <ShimmerList rows={3} />
-          ) : posts.length === 0 ? (
-            <EmptyState copy={EMPTY_COPY.hashtag} cta="Explore topics" onCta={() => router.push("/explore")} />
+          ) : saved.length === 0 ? (
+            <EmptyState
+              copy={EMPTY_COPY.saved}
+              cta="Explore dramas"
+              onCta={() => router.push("/explore")}
+            />
           ) : (
-            posts.map((post) => (
+            saved.map((post) => (
               <PostCard
                 key={post._id}
                 post={post as PostCardData}
@@ -64,7 +61,6 @@ export default function HashtagPage() {
           )}
         </View>
       </ScrollView>
-
       <ReportSheet target={report} onClose={() => setReport(null)} />
     </Screen>
   );

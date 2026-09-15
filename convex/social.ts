@@ -142,6 +142,45 @@ export const listFollowingUsers = query({
   },
 });
 
+// Privacy surfaces (Spec §18/§28): the viewer's own blocked and muted lists, so
+// Settings can show and undo them. Own data only — never another user's edges.
+export const listBlocks = query({
+  args: {},
+  handler: async (ctx) => {
+    const viewer = await requireViewer(ctx);
+    const rows = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker", (q) => q.eq("blockerId", viewer._id))
+      .collect();
+    const out = [];
+    for (const row of rows) {
+      const profile = await ctx.db.get(row.blockedProfileId);
+      out.push({
+        handle: profile?.handle ?? "unknown",
+        displayName: profile?.displayName ?? "Unknown",
+        since: row.createdAt,
+      });
+    }
+    return out;
+  },
+});
+
+export const listMutes = query({
+  args: {},
+  handler: async (ctx) => {
+    const viewer = await requireViewer(ctx);
+    const rows = await ctx.db
+      .query("mutes")
+      .withIndex("by_profile_target", (q) => q.eq("profileId", viewer._id))
+      .collect();
+    return rows.map((row) => ({
+      targetType: row.targetType,
+      targetId: row.targetId,
+      since: row.createdAt,
+    }));
+  },
+});
+
 // Viewer's relationship to a profile (follows? blocked?) for profile screens.
 export const relationship = query({
   args: { handle: v.string() },

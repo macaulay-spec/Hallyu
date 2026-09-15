@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, PressableProps, Text, TextProps, View, ViewProps } from "react-native";
+import {
+  Pressable,
+  PressableProps,
+  ScrollView,
+  Text,
+  TextProps,
+  View,
+  ViewProps,
+} from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -246,12 +254,15 @@ export function SpoilerOverlay({
   drama,
   episode,
   watchedThrough,
+  note,
   onReveal,
   onDismiss,
 }: {
   drama: string;
   episode?: number | null;
   watchedThrough?: number | null;
+  /** Why the engine guarded this — the §9 explanation line. */
+  note?: string;
   onReveal: () => void;
   onDismiss?: () => void;
 }) {
@@ -267,8 +278,13 @@ export function SpoilerOverlay({
         <T variant="secondary" className="mt-1">
           {drama}
           {episode != null ? ` · Ep ${episode}` : ""}
-          {watchedThrough != null ? ` · you've watched through Ep ${watchedThrough}` : ""}
+          {note ? ` — ${note}` : ""}
         </T>
+        {watchedThrough != null ? (
+          <T variant="tertiary" className="mt-1">
+            You've watched through Ep {watchedThrough} of this drama.
+          </T>
+        ) : null}
         <Row className="mt-3">
           <Button size="sm" label="Show anyway" onPress={onReveal} />
           {onDismiss ? (
@@ -283,5 +299,251 @@ export function SpoilerOverlay({
         </Row>
       </View>
     </View>
+  );
+}
+
+// ---------- Avatar (initials tile — no fake photos, Spec §39) ----------
+const AVATAR_TONES = ["#4A1C6E", "#2D6CDF", "#7B4FD8", "#1F5F8B", "#6B2E7A"];
+
+export function Avatar({
+  name,
+  size = 40,
+  badge,
+}: {
+  name: string;
+  size?: number;
+  badge?: string | null;
+}) {
+  const initials = name
+    .replace(/[^A-Za-z0-9 ]/g, "")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+  const tone = AVATAR_TONES[name.length % AVATAR_TONES.length]!;
+  return (
+    <View style={{ width: size, height: size }}>
+      <View
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: tone }}
+        className="items-center justify-center"
+      >
+        <Text style={{ color: "#F5F5F5", fontSize: size * 0.38, fontWeight: "700" }}>
+          {initials || "?"}
+        </Text>
+      </View>
+      {badge ? (
+        <View className="absolute -right-1 -bottom-1 rounded-full bg-brand-ocean px-1.5 py-0.5">
+          <Text style={{ color: "#FFFFFF", fontSize: 9, fontWeight: "700" }}>{badge}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+// ---------- Segmented control (For You / Following, profile tabs) ----------
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  className,
+}: {
+  options: Array<{ value: T; label: string; badge?: number }>;
+  value: T;
+  onChange: (value: T) => void;
+  className?: string;
+}) {
+  return (
+    <View className={cn("flex-row rounded-full bg-card border border-line p-1", className)}>
+      {options.map((opt) => {
+        const active = opt.value === value;
+        return (
+          <Pressable
+            key={opt.value}
+            onPress={() => onChange(opt.value)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            className={cn(
+              "flex-1 rounded-full py-2 items-center justify-center",
+              active ? "bg-brand" : ""
+            )}
+          >
+            <Text
+              className={cn(
+                "text-[13px] font-semibold",
+                active ? "text-white" : "text-text-secondary"
+              )}
+            >
+              {opt.label}
+              {opt.badge ? ` ${opt.badge}` : ""}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// ---------- Chip (genre / filter / tag) ----------
+export function Chip({
+  label,
+  active,
+  onPress,
+  className,
+}: {
+  label: string;
+  active?: boolean;
+  onPress?: () => void;
+  className?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: !!active }}
+      className={cn(
+        "rounded-full px-3.5 py-1.5 mr-2 mb-2 border",
+        active ? "bg-brand border-brand" : "bg-card border-line",
+        className
+      )}
+    >
+      <Text className={cn("text-[12px]", active ? "text-white font-semibold" : "text-text-secondary")}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+// ---------- Section header + horizontal rail ----------
+export function SectionHeader({
+  title,
+  subtitle,
+  action,
+  onAction,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <Row className="px-4 mb-2 justify-between">
+      <View className="flex-1 pr-3">
+        <T variant="h3">{title}</T>
+        {subtitle ? <T variant="tertiary">{subtitle}</T> : null}
+      </View>
+      {action ? (
+        <Pressable onPress={onAction} accessibilityRole="button">
+          <T variant="brand">{action}</T>
+        </Pressable>
+      ) : null}
+    </Row>
+  );
+}
+
+export function Rail({ children }: { children: React.ReactNode }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ paddingHorizontal: 16 }}
+      className="flex-grow-0"
+    >
+      {children}
+    </ScrollView>
+  );
+}
+
+export function Divider({ className }: { className?: string }) {
+  return <View className={cn("h-px bg-line", className)} />;
+}
+
+// ---------- Badge (status, spoiler level, official) ----------
+const BADGE_TONES = {
+  brand: "bg-brand",
+  coral: "bg-coral",
+  success: "bg-success",
+  warn: "bg-warn",
+  muted: "bg-card-elevated",
+  danger: "bg-danger",
+} as const;
+
+export function Badge({
+  label,
+  tone = "muted",
+  className,
+}: {
+  label: string;
+  tone?: keyof typeof BADGE_TONES;
+  className?: string;
+}) {
+  return (
+    <View className={cn("rounded-full px-2 py-0.5", BADGE_TONES[tone], className)}>
+      <Text
+        style={{ color: tone === "muted" ? "#A3A3A3" : "#FFFFFF", fontSize: 10, fontWeight: "700" }}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+// ---------- Progress bar (watching progress, upload) ----------
+export function Bar({
+  value,
+  max,
+  className,
+}: {
+  value: number;
+  max: number;
+  className?: string;
+}) {
+  const pct = max <= 0 ? 0 : Math.max(0, Math.min(1, value / max));
+  return (
+    <View className={cn("h-1.5 rounded-full bg-card-elevated overflow-hidden", className)}>
+      <View className="h-full rounded-full bg-brand" style={{ width: `${pct * 100}%` }} />
+    </View>
+  );
+}
+
+// ---------- Tappable list row ----------
+export function ListRow({
+  title,
+  subtitle,
+  right,
+  onPress,
+  className,
+}: {
+  title: string;
+  subtitle?: string | null;
+  right?: React.ReactNode;
+  onPress?: () => void;
+  className?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      className={cn("flex-row items-center px-4 py-3.5", className)}
+    >
+      <View className="flex-1 pr-3">
+        <T variant="h3">{title}</T>
+        {subtitle ? <T variant="tertiary">{subtitle}</T> : null}
+      </View>
+      {right ?? <T variant="tertiary">›</T>}
+    </Pressable>
+  );
+}
+
+// ---------- Tag (inline, tappable entity) ----------
+export function Tag({ label, onPress }: { label: string; onPress?: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      className="rounded-full bg-card-elevated px-3 py-1 mr-2 mb-1.5"
+    >
+      <T variant="tertiary">{label}</T>
+    </Pressable>
   );
 }
