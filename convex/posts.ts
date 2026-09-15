@@ -6,6 +6,7 @@ import { notifyMentions } from "./lib/notify";
 import { spoilerGuard, SpoilerDecision } from "./lib/spoiler";
 import { track } from "./onboarding";
 import { Doc, Id } from "./_generated/dataModel";
+import { artUrl } from "../lib/art";
 
 const CATEGORIES = [
   "reaction", "discussion", "theory", "recommendation",
@@ -35,10 +36,21 @@ export async function assemble(
     if (blocked) return null;
   }
 
-  let drama: { slug: string; title: string; titleKr: string | null } | null = null;
+  let drama: {
+    slug: string;
+    title: string;
+    titleKr: string | null;
+    posterUrl: string | null;
+  } | null = null;
   if (post.dramaId) {
     const d = await ctx.db.get(post.dramaId);
-    if (d) drama = { slug: d.slug, title: d.title, titleKr: d.titleKr ?? null };
+    if (d)
+      drama = {
+        slug: d.slug,
+        title: d.title,
+        titleKr: d.titleKr ?? null,
+        posterUrl: artUrl(d.tmdbPosterPath),
+      };
   }
 
   // Per-user spoiler engine (M3, D-10): the decision compares the post's

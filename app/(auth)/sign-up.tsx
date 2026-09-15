@@ -22,11 +22,27 @@ export default function SignUp() {
     setBusy(true);
     setError(null);
     try {
-      await signIn("password", { email: email.trim().toLowerCase(), password, flow: "signUp" });
+      // Fail fast when the backend deployment is unreachable, instead of
+      // spinning forever (this bit: a dead EXPO_PUBLIC_CONVEX_URL 404s and
+      // Convex Auth retries silently).
+      const result = (await Promise.race([
+        signIn("password", { email: email.trim().toLowerCase(), password, flow: "signUp" }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("BACKEND_TIMEOUT")), 12000)
+        ),
+      ])) as unknown;
       // Router redirect is handled by SessionGate once auth state flips.
+      void result;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "UNKNOWN";
-      setError(msg.includes("already") ? errorCopy("AUTH_INVALID") : errorCopy("UNKNOWN"));
+      if (msg.includes("BACKEND_TIMEOUT")) {
+        setError({
+          title: "Can't reach the Hallyu backend",
+          body: "The app is pointed at a Convex deployment that isn't responding. Ask the owner to update EXPO_PUBLIC_CONVEX_URL in Settings → Environment.",
+        });
+      } else {
+        setError(msg.includes("already") ? errorCopy("AUTH_INVALID") : errorCopy("UNKNOWN"));
+      }
       setBusy(false);
     }
   }

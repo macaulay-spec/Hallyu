@@ -14,18 +14,26 @@ import {
   Badge,
   ShimmerList,
   EmptyState,
+  BrandHero,
+  HeroAction,
+  DramaCover,
 } from "@/components/ui";
 import { PostCard, PostCardData } from "@/components/PostCard";
 import { ReportSheet, ReportTarget } from "@/components/ReportSheet";
 import { EMPTY_COPY } from "@/lib/copy";
 import { EXPO_PUBLIC_CONVEX_URL } from "@/lib/brand";
+import { TAB_BAR_CLEARANCE } from "@/lib/theme";
 
-// Home (SCREEN_NAVIGATION_MAP #12, Spec §5). Sticky For You / Following
-// segmented control, then the top modules: Airing Now, Episode Activity,
-// Communities for you, Drama Updates — all computed from real rows. For You
-// items carry the reason that ranked them (§17) so the feed is never opaque.
-// There is no pull-to-refresh by design: Convex queries are live subscriptions,
-// so the feed already updates itself (documented in the README).
+// Home (SCREEN_NAVIGATION_MAP #12, Spec §5) — the reference-design screen:
+// violet→azure gradient header with the serif wordmark, search + notification
+// actions, then the horizontal rail of circular drama covers (Airing Now,
+// §5), then the image-first feed. Sticky For You / Following segmented
+// control. For You items carry the reason that ranked them (§17) so the feed
+// is never opaque. There is no pull-to-refresh by design: Convex queries are
+// live subscriptions, so the feed already updates itself (README).
+//
+// The secondary discovery modules (Episode Activity, Communities for you)
+// live on Explore now, where they have room to breathe.
 
 export default function Home() {
   const [tab, setTab] = useState<"foryou" | "following">("foryou");
@@ -33,9 +41,11 @@ export default function Home() {
   const router = useRouter();
 
   const offline = !EXPO_PUBLIC_CONVEX_URL;
-  const modules = useQuery(api.feeds.homeModules, EXPO_PUBLIC_CONVEX_URL ? {} : "skip");
+  const live = EXPO_PUBLIC_CONVEX_URL ? {} : "skip";
+  const modules = useQuery(api.feeds.homeModules, live);
   const forYou = useQuery(api.feeds.forYou, EXPO_PUBLIC_CONVEX_URL ? { limit: 30 } : "skip");
   const following = useQuery(api.feeds.following, EXPO_PUBLIC_CONVEX_URL ? { limit: 30 } : "skip");
+  const unread = useQuery(api.notifications.unreadCount, live);
 
   const items = (tab === "foryou" ? forYou?.items : following?.items) as PostCardData[] | undefined;
 
@@ -43,28 +53,69 @@ export default function Home() {
     setReport({ targetType: "post", targetId: post._id, label: `post by @${post.author.handle}` });
   }
 
+  const covers = (modules?.airingNow ?? []).slice(0, 10);
+
   return (
     <Screen>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        <View className="px-4 pt-14 pb-3">
-          <Row className="justify-between">
-            <View>
-              <T variant="h1">Hallyu</T>
-              <T variant="tertiary">Where the Wave Lives</T>
-            </View>
-            <Link href="/search" asChild>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Search"
-                className="h-10 w-10 items-center justify-center rounded-full bg-card border border-line"
-              >
-                <T variant="secondary">⌕</T>
-              </Pressable>
-            </Link>
-          </Row>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_CLEARANCE }}
+      >
+        {/* Gradient hero + cover rail (reference design top block) */}
+        <BrandHero
+          subtitle={BRAND_SUBTITLE}
+          right={
+            <>
+              <Link href="/search" asChild>
+                <HeroAction glyph="⌕" label="Search" />
+              </Link>
+              <Link href="/notifications" asChild>
+                <HeroAction glyph="🔔" label="Notifications" badge={unread ?? 0} />
+              </Link>
+            </>
+          }
+        >
+          <View className="mt-4 -mx-4">
+            {modules === undefined ? (
+              <View className="flex-row px-4 pb-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <View
+                    key={i}
+                    className="mr-3.5 h-[78px] w-[78px] rounded-full bg-white/10"
+                  />
+                ))}
+              </View>
+            ) : covers.length === 0 ? (
+              <T className="text-white/70 text-[12px] pb-3">
+                Nothing is airing right now — follow dramas in Explore to build this rail.
+              </T>
+            ) : (
+              <Rail>
+                {covers.map((d) => (
+                  <DramaCover
+                    key={d.slug}
+                    title={d.title}
+                    seed={d.slug}
+                    uri={d.posterUrl}
+                    following={d.followed}
+                    updates={
+                      d.nextEpisodeAt
+                        ? `Next ${new Date(d.nextEpisodeAt).toISOString().slice(5, 10)}`
+                        : d.releaseSchedule ?? "Airing"
+                    }
+                    onPress={() => router.push(`/drama/${d.slug}`)}
+                  />
+                ))}
+              </Rail>
+            )}
+          </View>
+        </BrandHero>
+
+        {/* Sticky feed switch */}
+        <View className="px-4 pt-3">
           <Segmented
-            className="mt-4"
             value={tab}
             onChange={setTab}
             options={[
@@ -75,7 +126,7 @@ export default function Home() {
         </View>
 
         {offline ? (
-          <Card className="mx-4 mb-3 p-4">
+          <Card className="mx-4 mt-3 p-4">
             <T variant="coral">Backend not configured</T>
             <T variant="secondary" className="mt-1">
               EXPO_PUBLIC_CONVEX_URL is not set, so there is nothing real to show yet.
@@ -86,130 +137,33 @@ export default function Home() {
 
         {tab === "foryou" ? (
           <>
-            {/* Airing Now (§5) */}
+            {/* The feed (§5/§51) */}
             <View className="mt-3">
-              <SectionHeader title="Airing Now" subtitle="New episodes on the schedule" />
-              {modules === undefined ? (
-                <ShimmerList rows={1} />
-              ) : modules.airingNow.length === 0 ? (
-                <T variant="tertiary" className="px-4">
-                  Nothing is airing right now.
-                </T>
+              {items === undefined ? (
+                <ShimmerList rows={3} />
+              ) : items.length === 0 ? (
+                <EmptyState
+                  copy={EMPTY_COPY.feed}
+                  cta="Find dramas"
+                  onCta={() => router.push("/explore")}
+                />
               ) : (
-                <Rail>
-                  {modules.airingNow.map((d) => (
-                    <Link key={d.slug} href={`/drama/${d.slug}`} asChild>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`${d.title}, episode ${d.nextEpisodeAt ? "scheduled" : "airing"}`}
-                        className="mr-3 w-40"
-                      >
-                        <Card className="p-3">
-                          <Row className="justify-between">
-                            <Badge label={d.followed ? "FOLLOWING" : "AIRING"} tone={d.followed ? "brand" : "success"} />
-                          </Row>
-                          <T variant="h3" className="mt-2" numberOfLines={2}>
-                            {d.title}
-                          </T>
-                          {d.titleKr ? <T variant="tertiary">{d.titleKr}</T> : null}
-                          <T variant="coral" className="mt-1.5">
-                            {d.releaseSchedule ?? "Schedule TBA"}
-                          </T>
-                          {d.nextEpisodeAt ? (
-                            <T variant="tertiary">
-                              Next: {new Date(d.nextEpisodeAt).toISOString().slice(0, 10)}
-                            </T>
-                          ) : null}
-                        </Card>
-                      </Pressable>
-                    </Link>
-                  ))}
-                </Rail>
+                items.map((post) => (
+                  <PostCard key={post._id} post={post} showReason onReport={reportPost} />
+                ))
               )}
             </View>
 
-            {/* Episode Activity (§8) */}
+            {/* Drama Updates (§5) — a digest, not a second feed */}
             <View className="mt-6">
-              <SectionHeader title="Episode Activity" subtitle="Live conversations this week" />
-              {modules === undefined ? (
-                <ShimmerList rows={1} />
-              ) : modules.episodeActivity.length === 0 ? (
-                <T variant="tertiary" className="px-4">
-                  No episode conversations yet — open a drama and start one.
-                </T>
-              ) : (
-                <View className="px-4">
-                  {modules.episodeActivity.map((e) => {
-                    const ahead = e.viewerWatchedThrough != null && e.number > e.viewerWatchedThrough;
-                    return (
-                      <Link key={e.episodeId} href={`/episode/${e.episodeId}`} asChild>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`${e.dramaTitle} episode ${e.number}, ${e.postCount} posts`}
-                        >
-                          <Card className="mb-2 p-3.5">
-                            <Row className="justify-between">
-                              <View className="flex-1 pr-3">
-                                <T variant="h3">
-                                  {e.dramaTitle} · Ep {e.number}
-                                </T>
-                                <T variant="tertiary">
-                                  {e.title ? `${e.title} · ` : ""}
-                                  {e.postCount} {e.postCount === 1 ? "post" : "posts"}
-                                  {e.airAt ? ` · aired ${new Date(e.airAt).toISOString().slice(5, 10)}` : ""}
-                                </T>
-                              </View>
-                              {ahead ? <Badge label="BEYOND YOU" tone="warn" /> : <T variant="tertiary">›</T>}
-                            </Row>
-                          </Card>
-                        </Pressable>
-                      </Link>
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-
-            {/* Communities for you (§5/§14) */}
-            <View className="mt-6">
-              <SectionHeader title="Communities for you" subtitle="Based on what's active" />
-              {modules === undefined ? (
-                <ShimmerList rows={1} />
-              ) : modules.communitiesForYou.length === 0 ? (
-                <T variant="tertiary" className="px-4">
-                  You've joined every community we know about.
-                </T>
-              ) : (
-                <Rail>
-                  {modules.communitiesForYou.map((c) => (
-                    <Link key={c.slug} href={`/community/${c.slug}`} asChild>
-                      <Pressable accessibilityRole="button" className="mr-3 w-56">
-                        <Card className="p-3.5">
-                          <Row className="justify-between">
-                            <T variant="h3">{c.name}</T>
-                            {c.isPrivate ? <Badge label="PRIVATE" tone="muted" /> : null}
-                          </Row>
-                          <T variant="tertiary" numberOfLines={2} className="mt-1">
-                            {c.description ?? "No description yet."}
-                          </T>
-                          <T variant="secondary" className="mt-2">
-                            {c.memberCount} members
-                          </T>
-                        </Card>
-                      </Pressable>
-                    </Link>
-                  ))}
-                </Rail>
-              )}
-            </View>
-
-            {/* Drama Updates (§5) */}
-            <View className="mt-6">
-              <SectionHeader title="Drama Updates" subtitle="Latest from the dramas you follow" />
+              <SectionHeader
+                title="Drama Updates"
+                subtitle="Latest from the dramas you follow"
+              />
               {modules === undefined ? (
                 <ShimmerList rows={1} />
               ) : modules.dramaUpdates.length === 0 ? (
-                <T variant="tertiary" className="px-4">
+                <T variant="tertiary" className="px-4 pb-2">
                   No drama activity yet.
                 </T>
               ) : (
@@ -232,30 +186,6 @@ export default function Home() {
                     </Link>
                   ))}
                 </View>
-              )}
-            </View>
-
-            <View className="mt-8">
-              <SectionHeader
-                title="Your feed"
-                subtitle={
-                  forYou?.personalized
-                    ? "Ranked by your follows, watch progress and interests"
-                    : "Sign in to personalize this"
-                }
-              />
-              {items === undefined ? (
-                <ShimmerList rows={3} />
-              ) : items.length === 0 ? (
-                <EmptyState
-                  copy={EMPTY_COPY.feed}
-                  cta="Find dramas"
-                  onCta={() => router.push("/explore")}
-                />
-              ) : (
-                items.map((post) => (
-                  <PostCard key={post._id} post={post} showReason onReport={reportPost} />
-                ))
               )}
             </View>
           </>
@@ -282,3 +212,5 @@ export default function Home() {
     </Screen>
   );
 }
+
+const BRAND_SUBTITLE = "Where the Wave Lives";

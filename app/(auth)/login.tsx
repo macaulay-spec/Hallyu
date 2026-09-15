@@ -19,10 +19,20 @@ export default function Login() {
     setBusy(true);
     setError(null);
     try {
-      await signIn("password", { email: email.trim().toLowerCase(), password, flow: "signIn" });
+      // Fail fast on an unreachable backend instead of spinning forever.
+      await Promise.race([
+        signIn("password", { email: email.trim().toLowerCase(), password, flow: "signIn" }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("BACKEND_TIMEOUT")), 12000)
+        ),
+      ]);
       // SessionGate flips to tabs automatically on success.
-    } catch {
-      setError("Couldn't sign you in — check your email and password, then try again.");
+    } catch (e) {
+      setError(
+        e instanceof Error && e.message.includes("BACKEND_TIMEOUT")
+          ? "Can't reach the Hallyu backend right now — the deployment in EXPO_PUBLIC_CONVEX_URL isn't responding."
+          : "Couldn't sign you in — check your email and password, then try again."
+      );
       setBusy(false);
     }
   }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  Image,
   Pressable,
   PressableProps,
   ScrollView,
@@ -15,8 +16,10 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ART_SCRIM, BRAND_GRADIENT, BRAND_GRADIENT_VIVID, COLORS, coverTone, FONTS } from "@/lib/theme";
 
 export function cn(...classes: Array<string | false | null | undefined>): string {
   return twMerge(clsx(classes));
@@ -24,14 +27,16 @@ export function cn(...classes: Array<string | false | null | undefined>): string
 
 // ---------- Text ----------
 const TEXT_VARIANTS = {
-  h1: "text-text-primary text-[28px] font-bold",
-  h2: "text-text-primary text-[22px] font-bold",
+  h1: "text-text-primary text-[28px] font-bold tracking-tight",
+  h2: "text-text-primary text-[22px] font-bold tracking-tight",
   h3: "text-text-primary text-[17px] font-semibold",
   body: "text-text-primary text-[15px]",
   secondary: "text-text-secondary text-[13px]",
   tertiary: "text-text-tertiary text-[12px]",
   coral: "text-coral text-[13px] font-semibold",
-  brand: "text-brand text-[13px] font-semibold",
+  brand: "text-brand-soft text-[13px] font-semibold",
+  display: "text-white text-[34px] font-bold",
+  hero: "text-text-primary text-[24px] font-bold",
 } as const;
 
 export type TextVariant = keyof typeof TEXT_VARIANTS;
@@ -39,14 +44,39 @@ export type TextVariant = keyof typeof TEXT_VARIANTS;
 export function T({
   variant = "body",
   className,
+  style,
   ...rest
 }: TextProps & { variant?: TextVariant; className?: string }) {
-  return <Text className={cn(TEXT_VARIANTS[variant], className)} {...rest} />;
+  return (
+    <Text
+      className={cn(TEXT_VARIANTS[variant], variant === "display" && "font-display", className)}
+      style={variant === "display" ? { fontFamily: FONTS.display, ...(style as object) } : style}
+      {...rest}
+    />
+  );
 }
 
 // ---------- Surfaces ----------
 export function Card({ className, ...rest }: ViewProps & { className?: string }) {
-  return <View className={cn("rounded-[12px] bg-card border border-line", className)} {...rest} />;
+  return (
+    <View
+      className={cn("rounded-2xl bg-card border border-line overflow-hidden", className)}
+      {...rest}
+    />
+  );
+}
+
+/** Glassy surface that sits on top of the header gradient. */
+export function GlassCard({ className, ...rest }: ViewProps & { className?: string }) {
+  return (
+    <View
+      className={cn(
+        "rounded-2xl border border-white/15 bg-white/10",
+        className
+      )}
+      {...rest}
+    />
+  );
 }
 
 export function Row({ className, ...rest }: ViewProps & { className?: string }) {
@@ -57,42 +87,219 @@ export function Screen({ className, ...rest }: ViewProps & { className?: string 
   return <View className={cn("flex-1 bg-surface", className)} {...rest} />;
 }
 
-// ---------- Brand banner (layered wave arcs, purple → blue) ----------
-export function BrandBanner({ height = 180 }: { height?: number }) {
+// ---------- Wave edge (the brand's flowing horizon) ----------
+// A scalloped edge built from overlapping circles in the color of whatever
+// section follows — cheap, resolution-independent, no native SVG dependency.
+export function WaveEdge({
+  color = COLORS.surface,
+  height = 26,
+  className,
+}: {
+  color?: string;
+  height?: number;
+  className?: string;
+}) {
   const [w, setW] = useState(0);
+  const bump = 46;
+  const count = w > 0 ? Math.ceil(w / bump) + 1 : 0;
   return (
     <View
       onLayout={(e) => setW(e.nativeEvent.layout.width)}
-      style={{ height, overflow: "hidden", backgroundColor: "#150A20" }}
+      style={{ height, overflow: "hidden" }}
+      className={cn("w-full", className)}
+      pointerEvents="none"
     >
-      {w > 0
-        ? Array.from({ length: 9 }).map((_, i) => (
-            <View
-              key={i}
-              style={{
-                position: "absolute",
-                top: height * 0.08,
-                left: (i / 9) * w - w * 0.4,
-                width: w * 0.8,
-                height: height * 0.84,
-                borderRadius: 999,
-                borderWidth: 1.5,
-                borderColor: i % 2 === 0 ? "rgba(74,28,110,0.85)" : "rgba(45,108,223,0.8)",
-              }}
-            />
-          ))
-        : null}
-      <View
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(15,15,15,0.45)",
-        }}
-      />
+      {Array.from({ length: count }).map((_, i) => (
+        <View
+          key={i}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: i * bump - bump / 2,
+            width: bump,
+            height: bump,
+            borderRadius: bump / 2,
+            backgroundColor: color,
+          }}
+        />
+      ))}
     </View>
+  );
+}
+
+// ---------- Brand hero (gradient header + serif wordmark + wave) ----------
+export function BrandHero({
+  title = "Hallyu",
+  subtitle,
+  right,
+  children,
+  className,
+}: {
+  title?: string;
+  subtitle?: string;
+  /** Actions rendered top-right (search, bell...). */
+  right?: React.ReactNode;
+  /** Extra content inside the gradient, above the wave (rails, chips...). */
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <View className={className}>
+      <LinearGradient colors={[...BRAND_GRADIENT]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <View className="px-4 pt-14 pb-1">
+          <Row className="justify-between">
+            <View>
+              <T variant="display">{title}</T>
+              {subtitle ? (
+                <T className="text-white/70 mt-0.5">{subtitle}</T>
+              ) : null}
+            </View>
+            <Row>{right}</Row>
+          </Row>
+          {children}
+        </View>
+        <WaveEdge color={COLORS.surface} height={28} />
+      </LinearGradient>
+    </View>
+  );
+}
+
+/** Circular icon action used in hero headers (search, bell). */
+export function HeroAction({
+  glyph,
+  label,
+  badge,
+  onPress,
+}: {
+  glyph: string;
+  label: string;
+  badge?: number;
+  onPress?: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      className="h-10 w-10 items-center justify-center rounded-full bg-white/15 border border-white/20 ml-2"
+    >
+      <Text style={{ fontSize: 17, color: "#FFFFFF" }}>{glyph}</Text>
+      {badge && badge > 0 ? (
+        <View className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-coral border border-white/40" />
+      ) : null}
+    </Pressable>
+  );
+}
+
+// ---------- Art (real image when present, honest gradient when not) ----------
+// Until TMDB art is synced (or the owner uploads art), every artwork surface
+// renders a deterministic brand gradient seeded by the drama slug + a serif
+// initial. No broken images, no fabricated photos (Spec §39).
+export function ArtImage({
+  uri,
+  seed,
+  label,
+  ratio = 1,
+  radius = 0,
+  scrim = true,
+  children,
+  className,
+}: {
+  uri?: string | null;
+  seed: string;
+  label?: string;
+  ratio?: number;
+  radius?: number;
+  scrim?: boolean;
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  const [toneA, toneB] = coverTone(seed);
+  return (
+    <View
+      className={cn("overflow-hidden bg-card", className)}
+      style={{ aspectRatio: ratio, borderRadius: radius }}
+    >
+      {uri ? (
+        <Image source={{ uri }} resizeMode="cover" style={{ width: "100%", height: "100%" }} />
+      ) : (
+        <LinearGradient colors={[toneA, toneB]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+          <View className="items-center justify-center flex-1">
+            <Text
+              style={{
+                fontFamily: FONTS.display,
+                fontSize: 44,
+                color: "rgba(255,255,255,0.9)",
+                fontWeight: "700",
+              }}
+            >
+              {(label ?? seed).replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase() || "H"}
+            </Text>
+            <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 10, letterSpacing: 2, marginTop: 2 }}>
+              HALLYU
+            </Text>
+          </View>
+        </LinearGradient>
+      )}
+      {scrim && (children || uri) ? (
+        <LinearGradient
+          colors={[...ART_SCRIM]}
+          locations={[0.45, 0.7, 1]}
+          style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0 }}
+          pointerEvents="none"
+        />
+      ) : null}
+      {children ? (
+        <View className="absolute left-0 right-0 bottom-0" pointerEvents="box-none">
+          {children}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+// ---------- Drama cover (the home rail's circular art) ----------
+export function DramaCover({
+  title,
+  updates,
+  uri,
+  seed,
+  following,
+  onPress,
+}: {
+  title: string;
+  updates?: string;
+  uri?: string | null;
+  seed: string;
+  following?: boolean;
+  onPress?: () => void;
+}) {
+  const size = 78;
+  const inner = size - 6;
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}${updates ? `, ${updates}` : ""}`}
+      className="mr-3.5 w-[92px] items-center"
+    >
+      <View
+        className="items-center justify-center"
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderWidth: 2,
+          borderColor: following ? COLORS.brandOcean : "rgba(255,255,255,0.35)",
+        }}
+      >
+        <ArtImage uri={uri} seed={seed} label={title} ratio={1} radius={inner / 2} scrim={false} />
+      </View>
+      <T variant="secondary" numberOfLines={1} className="mt-1.5 text-[11px] text-text-primary">
+        {title}
+      </T>
+      {updates ? <T variant="tertiary" className="text-[10px]">{updates}</T> : null}
+    </Pressable>
   );
 }
 
@@ -104,21 +311,9 @@ export function WaveProgress({ className }: { className?: string }) {
 
   useEffect(() => {
     const dur = 900;
-    p1.value = withRepeat(
-      withTiming(1, { duration: dur, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true
-    );
-    p2.value = withRepeat(
-      withTiming(1, { duration: dur + 150, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true
-    );
-    p3.value = withRepeat(
-      withTiming(1, { duration: dur + 300, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true
-    );
+    p1.value = withRepeat(withTiming(1, { duration: dur, easing: Easing.inOut(Easing.ease) }), -1, true);
+    p2.value = withRepeat(withTiming(1, { duration: dur + 150, easing: Easing.inOut(Easing.ease) }), -1, true);
+    p3.value = withRepeat(withTiming(1, { duration: dur + 300, easing: Easing.inOut(Easing.ease) }), -1, true);
   }, [p1, p2, p3]);
 
   const s1 = useAnimatedStyle(() => ({ opacity: 0.35 + 0.65 * p1.value }));
@@ -129,9 +324,9 @@ export function WaveProgress({ className }: { className?: string }) {
   return (
     <View className={cn("items-center justify-center", className)}>
       <View className="flex-row items-center">
-        <Animated.View style={[bar, s1, { backgroundColor: "#4A1C6E" }]} />
-        <Animated.View style={[bar, s2, { backgroundColor: "#7B4FD8" }]} />
-        <Animated.View style={[bar, s3, { backgroundColor: "#2D6CDF" }]} />
+        <Animated.View style={[bar, s1, { backgroundColor: COLORS.brandDeep }]} />
+        <Animated.View style={[bar, s2, { backgroundColor: COLORS.brand }]} />
+        <Animated.View style={[bar, s3, { backgroundColor: COLORS.brandOcean }]} />
       </View>
     </View>
   );
@@ -139,10 +334,11 @@ export function WaveProgress({ className }: { className?: string }) {
 
 // ---------- Button ----------
 const BUTTON_VARIANTS = {
-  primary: "bg-brand rounded-[12px] items-center justify-center",
-  secondary: "border border-line bg-card rounded-[12px] items-center justify-center",
+  primary: "bg-brand rounded-[14px] items-center justify-center",
+  gradient: "rounded-[14px] items-center justify-center overflow-hidden",
+  secondary: "border border-line bg-card rounded-[14px] items-center justify-center",
   ghost: "items-center justify-center",
-  coral: "bg-coral rounded-[12px] items-center justify-center",
+  coral: "bg-coral rounded-[14px] items-center justify-center",
 } as const;
 
 const BUTTON_SIZES = {
@@ -166,9 +362,22 @@ export function Button({
 }) {
   const disabledCls = disabled ? " opacity-50" : "";
   const labelCls =
-    variant === "primary" || variant === "coral"
+    variant === "primary" || variant === "gradient" || variant === "coral"
       ? "text-white text-[15px] font-semibold"
       : "text-text-primary text-[15px] font-semibold";
+
+  if (variant === "gradient") {
+    return (
+      <Pressable
+        disabled={disabled}
+        className={cn(BUTTON_VARIANTS[variant], BUTTON_SIZES[size], disabledCls, className)}
+        {...rest}
+      >
+        <LinearGradient colors={[...BRAND_GRADIENT_VIVID]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
+        <Text className={labelCls}>{label}</Text>
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -233,7 +442,7 @@ export function ShimmerCard({ height = 96 }: { height?: number }) {
 
   return (
     <Animated.View
-      style={[{ height, borderRadius: 12, backgroundColor: "#1A1A1A" }, s]}
+      style={[{ height, borderRadius: 16, backgroundColor: COLORS.card }, s]}
       className="mb-3"
     />
   );
@@ -267,12 +476,10 @@ export function SpoilerOverlay({
   onDismiss?: () => void;
 }) {
   return (
-    <View className="rounded-[12px] bg-card border border-line overflow-hidden">
-      <View className="flex-row h-1">
-        <View className="flex-1 bg-[#4A1C6E]" />
-        <View className="flex-1 bg-[#7B4FD8]" />
-        <View className="flex-1 bg-[#2D6CDF]" />
-      </View>
+    <View className="rounded-2xl bg-card border border-line overflow-hidden">
+      <LinearGradient colors={[...BRAND_GRADIENT_VIVID]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+        <View className="h-1" />
+      </LinearGradient>
       <View className="p-4">
         <T variant="coral">Spoiler ahead</T>
         <T variant="secondary" className="mt-1">
@@ -286,15 +493,9 @@ export function SpoilerOverlay({
           </T>
         ) : null}
         <Row className="mt-3">
-          <Button size="sm" label="Show anyway" onPress={onReveal} />
+          <Button size="sm" variant="gradient" label="Show anyway" onPress={onReveal} />
           {onDismiss ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              label="Not now"
-              onPress={onDismiss}
-              className="ml-2"
-            />
+            <Button size="sm" variant="secondary" label="Not now" onPress={onDismiss} className="ml-2" />
           ) : null}
         </Row>
       </View>
@@ -303,16 +504,18 @@ export function SpoilerOverlay({
 }
 
 // ---------- Avatar (initials tile — no fake photos, Spec §39) ----------
-const AVATAR_TONES = ["#4A1C6E", "#2D6CDF", "#7B4FD8", "#1F5F8B", "#6B2E7A"];
+const AVATAR_TONES = ["#4A1C6E", "#2E7CDF", "#7B3FE4", "#1F5F8B", "#6B2E7A"];
 
 export function Avatar({
   name,
   size = 40,
   badge,
+  uri,
 }: {
   name: string;
   size?: number;
   badge?: string | null;
+  uri?: string | null;
 }) {
   const initials = name
     .replace(/[^A-Za-z0-9 ]/g, "")
@@ -324,14 +527,22 @@ export function Avatar({
   const tone = AVATAR_TONES[name.length % AVATAR_TONES.length]!;
   return (
     <View style={{ width: size, height: size }}>
-      <View
-        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: tone }}
-        className="items-center justify-center"
-      >
-        <Text style={{ color: "#F5F5F5", fontSize: size * 0.38, fontWeight: "700" }}>
-          {initials || "?"}
-        </Text>
-      </View>
+      {uri ? (
+        <Image
+          source={{ uri }}
+          resizeMode="cover"
+          style={{ width: size, height: size, borderRadius: size / 2 }}
+        />
+      ) : (
+        <View
+          style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: tone }}
+          className="items-center justify-center"
+        >
+          <Text style={{ color: "#F5F5F5", fontSize: size * 0.38, fontWeight: "700" }}>
+            {initials || "?"}
+          </Text>
+        </View>
+      )}
       {badge ? (
         <View className="absolute -right-1 -bottom-1 rounded-full bg-brand-ocean px-1.5 py-0.5">
           <Text style={{ color: "#FFFFFF", fontSize: 9, fontWeight: "700" }}>{badge}</Text>
@@ -354,7 +565,7 @@ export function Segmented<T extends string>({
   className?: string;
 }) {
   return (
-    <View className={cn("flex-row rounded-full bg-card border border-line p-1", className)}>
+    <View className={cn("flex-row rounded-full bg-white/10 border border-white/15 p-1", className)}>
       {options.map((opt) => {
         const active = opt.value === value;
         return (
@@ -363,11 +574,16 @@ export function Segmented<T extends string>({
             onPress={() => onChange(opt.value)}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
-            className={cn(
-              "flex-1 rounded-full py-2 items-center justify-center",
-              active ? "bg-brand" : ""
-            )}
+            className={cn("flex-1 rounded-full py-2 items-center justify-center", active ? "" : "")}
           >
+            {active ? (
+              <LinearGradient
+                colors={[...BRAND_GRADIENT_VIVID]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, borderRadius: 999 }}
+              />
+            ) : null}
             <Text
               className={cn(
                 "text-[13px] font-semibold",
@@ -480,11 +696,45 @@ export function Badge({
   return (
     <View className={cn("rounded-full px-2 py-0.5", BADGE_TONES[tone], className)}>
       <Text
-        style={{ color: tone === "muted" ? "#A3A3A3" : "#FFFFFF", fontSize: 10, fontWeight: "700" }}
+        style={{ color: tone === "muted" ? "#AC9FC9" : "#FFFFFF", fontSize: 10, fontWeight: "700" }}
       >
         {label}
       </Text>
     </View>
+  );
+}
+
+/** Translucent pill used for engagement counts sitting on artwork. */
+export function ArtStat({
+  glyph,
+  count,
+  active,
+  onPress,
+  onLongPress,
+  label,
+}: {
+  glyph: string;
+  count?: string | number;
+  active?: boolean;
+  onPress?: () => void;
+  onLongPress?: () => void;
+  label: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}${count != null ? `, ${count}` : ""}`}
+      className="flex-row items-center rounded-full bg-black/35 border border-white/15 px-2.5 py-1"
+    >
+      <Text style={{ fontSize: 12, color: active ? COLORS.coral : "#FFFFFF" }}>{glyph}</Text>
+      {count != null && count !== "" ? (
+        <Text style={{ fontSize: 11, color: "#FFFFFF", marginLeft: 4, fontWeight: "600" }}>
+          {count}
+        </Text>
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -501,7 +751,12 @@ export function Bar({
   const pct = max <= 0 ? 0 : Math.max(0, Math.min(1, value / max));
   return (
     <View className={cn("h-1.5 rounded-full bg-card-elevated overflow-hidden", className)}>
-      <View className="h-full rounded-full bg-brand" style={{ width: `${pct * 100}%` }} />
+      <LinearGradient
+        colors={[...BRAND_GRADIENT_VIVID]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={{ height: "100%", width: `${pct * 100}%` }}
+      />
     </View>
   );
 }
@@ -545,5 +800,38 @@ export function Tag({ label, onPress }: { label: string; onPress?: () => void })
     >
       <T variant="tertiary">{label}</T>
     </Pressable>
+  );
+}
+
+// ---------- Brand banner (layered wave arcs — community header) ----------
+export function BrandBanner({ height = 180 }: { height?: number }) {
+  const [w, setW] = useState(0);
+  return (
+    <LinearGradient colors={[...BRAND_GRADIENT]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+      <View
+        onLayout={(e) => setW(e.nativeEvent.layout.width)}
+        style={{ height, overflow: "hidden" }}
+      >
+        {w > 0
+          ? Array.from({ length: 9 }).map((_, i) => (
+              <View
+                key={i}
+                style={{
+                  position: "absolute",
+                  top: height * 0.08,
+                  left: (i / 9) * w - w * 0.4,
+                  width: w * 0.8,
+                  height: height * 0.84,
+                  borderRadius: 999,
+                  borderWidth: 1.5,
+                  borderColor:
+                    i % 2 === 0 ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.14)",
+                }}
+              />
+            ))
+          : null}
+        <WaveEdge color={COLORS.surface} height={24} />
+      </View>
+    </LinearGradient>
   );
 }

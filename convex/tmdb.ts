@@ -16,6 +16,8 @@ type TmdbShow = {
   original_name?: string;
   overview?: string;
   first_air_date?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
 };
 
 export const syncStatus = query({
@@ -59,6 +61,8 @@ export const sync = internalAction({
         dramaId: d._id,
         overview: show.overview ?? null,
         year: show.first_air_date ? Number(show.first_air_date.slice(0, 4)) : null,
+        posterPath: show.poster_path ?? null,
+        backdropPath: show.backdrop_path ?? null,
       });
       updated += 1;
     }

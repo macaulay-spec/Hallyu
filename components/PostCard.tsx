@@ -4,12 +4,29 @@ import { Modal, Pressable, Share, View } from "react-native";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { Avatar, Badge, Button, Card, Row, SpoilerOverlay, T, cn } from "@/components/ui";
+import {
+  ArtImage,
+  ArtStat,
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Row,
+  SpoilerOverlay,
+  T,
+  cn,
+} from "@/components/ui";
 import { errorCopy } from "@/lib/copy";
 
 // PostCard — the shared feed unit (Spec §51 "Home feed" + SCREEN_NAVIGATION_MAP
-// "PostCard"). Everything it shows is a real value from the server read model;
-// guarded bodies arrive empty and only the audited reveal can fetch them.
+// "PostCard"), redrawn image-first per the owner's reference design: full-bleed
+// drama art, caption overlaid bottom-left in bold white, engagement pills
+// sitting on the image. Everything shown is a real server value; guarded bodies
+// arrive empty and only the audited reveal can fetch them (the art is also
+// hidden for guarded posts so the overlay can't be read off the imagery).
+//
+// Posts without a drama context render as a classic text card — there is no
+// artwork to attach, and fabricating one is banned (Spec §39).
 
 const REACTIONS = [
   { kind: "heart", glyph: "❤️" },
@@ -35,7 +52,12 @@ export type PostCardData = {
   spoilerGuarded: boolean;
   spoilerReason?: string;
   spoilerLevel: string;
-  drama: { slug: string; title: string; titleKr: string | null } | null;
+  drama: {
+    slug: string;
+    title: string;
+    titleKr: string | null;
+    posterUrl: string | null;
+  } | null;
   episodeNumber: number | null;
   official: boolean;
   reactionCount: number;
@@ -63,6 +85,14 @@ function timeAgo(ts: number): string {
   return new Date(ts).toISOString().slice(0, 10);
 }
 
+function compactCount(n: number): string {
+  if (n >= 1000) {
+    const v = n / 1000;
+    return `${v >= 100 ? Math.round(v) : Math.round(v * 10) / 10}K`;
+  }
+  return String(n);
+}
+
 const CATEGORY_LABEL: Record<string, string> = {
   reaction: "Reaction",
   discussion: "Discussion",
@@ -85,13 +115,14 @@ export function PostCard({
 }) {
   const [revealed, setRevealed] = useState(false);
   const [body, setBody] = useState(post.body);
-  const [reaction, setReaction] = useState<string | null>(null);
+  const [reaction, setReaction] = useState<string | null>(post.viewerReacted ? "heart" : null);
   const [reactionCount, setReactionCount] = useState(post.reactionCount);
   const [bookmarked, setBookmarked] = useState(post.viewerBookmarked);
   const [bookmarkCount, setBookmarkCount] = useState(post.bookmarkCount);
   const [reposted, setReposted] = useState(false);
   const [repostCount, setRepostCount] = useState(post.repostCount);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const toggleReaction = useMutation(api.engagement.toggleReaction);
@@ -113,6 +144,7 @@ export function PostCard({
     const prevCount = reactionCount;
     setReaction(wasActive ? null : kind);
     setReactionCount(wasActive ? Math.max(0, prevCount - 1) : prevCount + (prevReaction ? 0 : 1));
+    setPickerOpen(false);
     try {
       const res = await toggleReaction({ postId: post._id, kind: kind as never });
       setReaction(res.active ? kind : null);
@@ -193,14 +225,179 @@ export function PostCard({
     }
   }
 
-  return (
-    <Card className="mx-4 mb-3 p-4">
-      {showReason && post.reason ? (
-        <T variant="brand" className="mb-2">
-          ✦ {post.reason}
-        </T>
-      ) : null}
+  const guarded = post.spoilerGuarded && !revealed;
+  const imageFirst = !!post.drama;
 
+  // ---------- Image-first card (posts tied to a drama) ----------
+  if (imageFirst) {
+    return (
+      <Card className="mx-4 mb-4 rounded-2xl border-line shadow-lg shadow-black/40">
+        <ArtImage
+          uri={post.drama!.posterUrl}
+          seed={post.drama!.slug}
+          label={post.drama!.title}
+          ratio={4 / 3}
+          scrim
+        >
+          {/* Top overlay: author row + optional ranking reason */}
+          <View className="p-3">
+            {showReason && post.reason ? (
+              <View className="self-start rounded-full bg-black/40 border border-white/15 px-2.5 py-1 mb-2">
+                <T className="text-white/85 text-[11px]" numberOfLines={2}>✦ {post.reason}</T>
+              </View>
+            ) : null}
+            <Row className="justify-between">
+              <Row className="flex-1 pr-2">
+                <Link href={`/user/${post.author.handle}`} asChild>
+                  <Pressable accessibilityRole="button" accessibilityLabel={`@${post.author.handle}`}>
+                    <Avatar name={post.author.displayName} size={34} />
+                  </Pressable>
+                </Link>
+                <View className="ml-2.5 flex-1">
+                  <Row className="flex-wrap">
+                    <Link href={`/user/${post.author.handle}`} asChild>
+                      <Pressable className="flex-row items-center">
+                        <T className="text-white text-[14px] font-semibold">{post.author.displayName}</T>
+                        {post.author.verified || post.official ? (
+                          <View className="ml-1.5 h-3.5 w-3.5 items-center justify-center rounded-full bg-brand-ocean">
+                            <T className="text-white text-[8px] font-bold">✓</T>
+                          </View>
+                        ) : null}
+                      </Pressable>
+                    </Link>
+                  </Row>
+                  <T className="text-white/70 text-[11px]">
+                    {timeAgo(post.createdAt)}
+                    {post.episodeNumber ? ` · Ep ${post.episodeNumber}` : ""}
+                  </T>
+                </View>
+              </Row>
+              <Pressable
+                onPress={() => setMenuOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Post options"
+                className="h-8 w-8 items-center justify-center rounded-full bg-black/30 border border-white/15"
+              >
+                <T className="text-white">⋯</T>
+              </Pressable>
+            </Row>
+          </View>
+
+          {/* Bottom overlay: caption + engagement */}
+          <View className="px-3.5 pb-3.5" style={{ paddingTop: 96 }}>
+            {guarded ? (
+              <View className="rounded-xl bg-black/45 border border-white/15 p-3">
+                <T variant="coral">Spoiler ahead</T>
+                <T className="text-white/85 text-[12px] mt-0.5">
+                  {SPOILER_REASON[post.spoilerReason ?? ""] ?? "it may reveal plot details"}
+                </T>
+                <Button
+                  size="sm"
+                  variant="gradient"
+                  label="Show anyway"
+                  className="mt-2.5 self-start"
+                  onPress={onReveal}
+                />
+              </View>
+            ) : (
+              <Link href={`/post/${post._id}`} asChild>
+                <Pressable accessibilityRole="button">
+                  <T className="text-white text-[19px] font-bold leading-[24px]" numberOfLines={2}>
+                    {revealed ? body : post.body || post.drama!.title}
+                  </T>
+                </Pressable>
+              </Link>
+            )}
+            <Row className="mt-3 justify-between">
+              <Row>
+                <ArtStat
+                  glyph={reaction === "heart" ? "❤️" : "♡"}
+                  count={compactCount(reactionCount)}
+                  active={!!reaction}
+                  label="React"
+                  onLongPress={() => setPickerOpen(!pickerOpen)}
+                  onPress={() => {
+                    if (reaction === null || reaction === "heart") {
+                      onReaction("heart");
+                    } else {
+                      setPickerOpen(!pickerOpen);
+                    }
+                  }}
+                />
+                <View className="ml-2">
+                  <Link href={`/post/${post._id}`} asChild>
+                    <Pressable accessibilityRole="button" accessibilityLabel="Comments">
+                      <ArtStat glyph="💬" count={compactCount(post.commentCount)} label="Comments" />
+                    </Pressable>
+                  </Link>
+                </View>
+                <View className="ml-2">
+                  <ArtStat
+                    glyph={reposted ? "🔁" : "⇄"}
+                    count={compactCount(repostCount)}
+                    label="Repost"
+                    onPress={onRepost}
+                  />
+                </View>
+                <View className="ml-2">
+                  <ArtStat
+                    glyph={bookmarked ? "🔖" : "📑"}
+                    label="Bookmark"
+                    onPress={onBookmark}
+                  />
+                </View>
+              </Row>
+              {post.pinned ? <Badge label="PINNED" tone="brand" /> : null}
+              {post.locked ? <Badge label="LOCKED" tone="warn" /> : null}
+            </Row>
+            {pickerOpen ? (
+              <Row className="mt-2 flex-wrap">
+                {REACTIONS.map((r) => (
+                  <Pressable
+                    key={r.kind}
+                    onPress={() => onReaction(r.kind)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`React ${r.kind.replace("_", " ")}`}
+                    className={cn(
+                      "mr-1.5 rounded-full px-2 py-1",
+                      reaction === r.kind ? "bg-white/40" : "bg-black/40 border border-white/15"
+                    )}
+                  >
+                    <T>{r.glyph}</T>
+                  </Pressable>
+                ))}
+              </Row>
+            ) : null}
+          </View>
+        </ArtImage>
+
+        {toast ? (
+          <View className="px-3.5 pb-3 pt-2">
+            <View className="rounded-[12px] bg-card-elevated px-3 py-2">
+              <T variant="secondary">{toast}</T>
+            </View>
+          </View>
+        ) : null}
+
+        <PostMenu
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          handle={post.author.handle}
+          onReport={() => {
+            setMenuOpen(false);
+            onReport?.(post);
+          }}
+          onMute={onMute}
+          onBlock={onBlock}
+          onShare={onShare}
+        />
+      </Card>
+    );
+  }
+
+  // ---------- Text card (no drama context → no fabricated art) ----------
+  return (
+    <Card className="mx-4 mb-4 p-4 rounded-2xl">
       <Row className="justify-between items-start">
         <Row className="flex-1 pr-2">
           <Link href={`/user/${post.author.handle}`} asChild>
@@ -235,23 +432,10 @@ export function PostCard({
         {post.pinned ? <Badge label="PINNED" tone="brand" className="mr-2" /> : null}
         {post.locked ? <Badge label="LOCKED" tone="warn" className="mr-2" /> : null}
         <Badge label={CATEGORY_LABEL[post.category] ?? post.category} tone="muted" className="mr-2" />
-        {post.drama ? (
-          <Link href={`/drama/${post.drama.slug}`} asChild>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`${post.drama.title}${post.episodeNumber ? ` episode ${post.episodeNumber}` : ""}`}
-              className="rounded-full bg-card-elevated px-3 py-1"
-            >
-              <T variant="tertiary">
-                📺 {post.drama.title}
-                {post.episodeNumber ? ` · Ep ${post.episodeNumber}` : ""}
-              </T>
-            </Pressable>
-          </Link>
-        ) : null}
+        {post.episodeNumber ? <Badge label={`EP ${post.episodeNumber}`} tone="muted" className="mr-2" /> : null}
       </Row>
 
-      {post.spoilerGuarded && !revealed ? (
+      {guarded ? (
         <View className="mt-3">
           <SpoilerOverlay
             drama={post.drama?.title ?? "This post"}
@@ -264,7 +448,7 @@ export function PostCard({
         <Link href={`/post/${post._id}`} asChild>
           <Pressable accessibilityRole="button">
             <T variant="body" className="mt-3 leading-6">
-              {revealed ? `⚠️ ${body}` : body}
+              {body}
             </T>
           </Pressable>
         </Link>
@@ -278,7 +462,7 @@ export function PostCard({
 
       <Row className="mt-3 justify-between">
         <Row className="flex-wrap">
-          {REACTIONS.map((r) => (
+          {REACTIONS.slice(0, 6).map((r) => (
             <Pressable
               key={r.kind}
               onPress={() => onReaction(r.kind)}
@@ -294,25 +478,13 @@ export function PostCard({
           ))}
         </Row>
         <Row>
-          <Link href={`/post/${post._id}`} asChild>
-            <Pressable accessibilityRole="button" accessibilityLabel="Comments" className="mr-3">
-              <T variant="tertiary">💬 {post.commentCount}</T>
-            </Pressable>
-          </Link>
           <Pressable
-            onPress={onRepost}
+            onPress={onBookmark}
             accessibilityRole="button"
-            accessibilityLabel="Repost"
+            accessibilityLabel="Bookmark"
             className="mr-3"
           >
-            <T variant="tertiary">
-              {reposted ? "🔁" : "↻"} {repostCount}
-            </T>
-          </Pressable>
-          <Pressable onPress={onBookmark} accessibilityRole="button" accessibilityLabel="Bookmark" className="mr-3">
-            <T variant="tertiary">
-              {bookmarked ? "🔖" : "📑"} {bookmarkCount}
-            </T>
+            <T variant="tertiary">{bookmarked ? "🔖" : "📑"} {bookmarkCount}</T>
           </Pressable>
           <Pressable onPress={onShare} accessibilityRole="button" accessibilityLabel="Share">
             <T variant="tertiary">↗</T>
@@ -334,24 +506,54 @@ export function PostCard({
         </View>
       ) : null}
 
-      <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
-        <Pressable className="flex-1 bg-black/60" onPress={() => setMenuOpen(false)} />
-        <View className="absolute bottom-0 left-0 right-0 rounded-t-[20px] border border-line bg-surface p-4 pb-8">
-          <T variant="h3">Post options</T>
-          <Button
-            variant="secondary"
-            label="Report post"
-            className="mt-4"
-            onPress={() => {
-              setMenuOpen(false);
-              onReport?.(post);
-            }}
-          />
-          <Button variant="secondary" label={`Mute @${post.author.handle}`} className="mt-2" onPress={onMute} />
-          <Button variant="secondary" label={`Block @${post.author.handle}`} className="mt-2" onPress={onBlock} />
-          <Button variant="ghost" label="Cancel" className="mt-3" onPress={() => setMenuOpen(false)} />
-        </View>
-      </Modal>
+      <PostMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        handle={post.author.handle}
+        onReport={() => {
+          setMenuOpen(false);
+          onReport?.(post);
+        }}
+        onMute={onMute}
+        onBlock={onBlock}
+        onShare={onShare}
+      />
     </Card>
+  );
+}
+
+function PostMenu({
+  open,
+  onClose,
+  handle,
+  onReport,
+  onMute,
+  onBlock,
+  onShare,
+}: {
+  open: boolean;
+  onClose: () => void;
+  handle: string;
+  onReport: () => void;
+  onMute: () => void;
+  onBlock: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable className="flex-1 bg-black/60" onPress={onClose} />
+      <View
+        className="absolute bottom-0 left-0 right-0 rounded-t-[24px] border border-line bg-card p-4"
+        style={{ paddingBottom: 40 }}
+      >
+        <View className="self-center mb-3 h-1 w-10 rounded-full bg-line-strong" />
+        <T variant="h3">Post options</T>
+        <Button variant="secondary" label="Report post" className="mt-4" onPress={onReport} />
+        <Button variant="secondary" label={`Mute @${handle}`} className="mt-2" onPress={onMute} />
+        <Button variant="secondary" label={`Block @${handle}`} className="mt-2" onPress={onBlock} />
+        <Button variant="secondary" label="Share" className="mt-2" onPress={onShare} />
+        <Button variant="ghost" label="Cancel" className="mt-3" onPress={onClose} />
+      </View>
+    </Modal>
   );
 }

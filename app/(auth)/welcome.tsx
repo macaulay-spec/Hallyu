@@ -1,43 +1,53 @@
 import { Link, Stack } from "expo-router";
-import { Screen, T, Button } from "@/components/ui";
+import { View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Screen, T, Button, WaveProgress } from "@/components/ui";
 import { BRAND, CONFIG_STATUS } from "@/lib/brand";
 
+// Welcome (SCREEN_NAVIGATION_MAP #2) — the first touch of the brand: full
+// gradient field, serif wordmark, the wave promise, then auth CTAs. Config
+// status stays honest (Spec §54) but quiet, at the bottom.
 export default function Welcome() {
   return (
     <Screen>
       <Stack.Screen options={{ headerShown: false }} />
-      <T variant="h1" className="px-6 pt-20">
-        {BRAND.name}
-      </T>
-      <T variant="brand" className="px-6 mt-1">
-        {BRAND.tagline}
-      </T>
-      <T variant="body" className="px-6 mt-4 text-text-secondary">
-        The social home for K-drama fandom — every drama, episode, conversation
-        and community connected into one living fan experience.
-      </T>
-      <T variant="tertiary" className="px-6 mt-6">
-        Backend: {CONFIG_STATUS.convex ? "connected" : "not configured yet — UI preview mode"}
-      </T>
-      <T variant="tertiary" className="px-6 mt-1">
-        TMDB sync: {CONFIG_STATUS.tmdb ? "configured" : "not configured (seed data in use)"}
-      </T>
-      <T variant="tertiary" className="px-6 mt-1">
-        Push: {CONFIG_STATUS.push ? "configured" : "not configured (in-app only)"}
-      </T>
-      <T variant="body" className="px-6 mt-8 text-text-tertiary">
-        Real authentication, feeds, discussions and spoiler protection arrive
-        with milestone M1. This is the M0 shell.
-      </T>
-      <T variant="tertiary" className="px-6 mt-6">
-        By continuing you agree to the Terms and Privacy Policy.
-      </T>
-      <Link href="/(auth)/login" asChild>
-        <Button label="Log in" variant="secondary" className="mx-6 mt-8" />
-      </Link>
-      <Link href="/(auth)/sign-up" asChild>
-        <Button label="Sign up" className="mx-6 mt-3" />
-      </Link>
+      <LinearGradient colors={["#2A0A45", "#5B21C9", "#0C0817"]} style={{ flex: 1 }}>
+        <View className="flex-1 justify-end px-6 pb-10">
+          <View className="flex-1 items-center justify-center">
+            <T variant="display" className="text-[56px]">
+              {BRAND.name}
+            </T>
+            <T className="text-white/75 mt-1">
+              {BRAND.koreanName} · {BRAND.tagline}
+            </T>
+            <WaveProgress className="mt-10" />
+          </View>
+
+          <T variant="hero" className="text-white">
+            The social home for K-drama fandom.
+          </T>
+          <T className="text-white/75 mt-2 leading-6">
+            Every drama, episode, conversation and community — connected into one
+            living fan experience, with spoiler protection built into its heart.
+          </T>
+
+          <Link href="/(auth)/login" asChild>
+            <Button label="Log in" variant="secondary" className="mt-8 border-white/30 bg-white/10" />
+          </Link>
+          <Link href="/(auth)/sign-up" asChild>
+            <Button label="Create your account" variant="gradient" className="mt-3" />
+          </Link>
+
+          <T variant="tertiary" className="mt-6 text-center">
+            Backend {CONFIG_STATUS.convex ? "connected" : "preview mode"} · TMDB{" "}
+            {CONFIG_STATUS.tmdb ? "configured" : "seed data"} · Push{" "}
+            {CONFIG_STATUS.push ? "configured" : "in-app only"}
+          </T>
+          <T variant="tertiary" className="mt-2 text-center">
+            By continuing you agree to the Terms and Privacy Policy.
+          </T>
+        </View>
+      </LinearGradient>
     </Screen>
   );
 }

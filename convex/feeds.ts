@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { getViewerProfile } from "./lib/guards";
 import { assemble } from "./posts";
 import { Doc, Id } from "./_generated/dataModel";
+import { artUrl } from "../lib/art";
 
 /** One assembled post plus the human reason that ranked it (§17). */
 type FeedItem = NonNullable<Awaited<ReturnType<typeof assemble>>> & { reason: string };
@@ -15,6 +16,7 @@ type AiringShape = {
   releaseSchedule: string | null;
   nextEpisodeAt: number | null;
   followed: boolean;
+  posterUrl: string | null;
 };
 
 type DramaUpdate = {
@@ -336,6 +338,7 @@ export const homeModules = query({
         releaseSchedule: d.releaseSchedule ?? null,
         nextEpisodeAt: d.nextEpisodeAt ?? null,
         followed: followedDramaSlugs.has(d.slug),
+        posterUrl: artUrl(d.tmdbPosterPath),
       }));
 
     // Drama Updates: latest post per followed drama (one row per drama, so the

@@ -4,6 +4,7 @@ import { ConvexError, getViewerProfile, requireViewer } from "./lib/guards";
 import { spoilerGuard } from "./lib/spoiler";
 import { track } from "./onboarding";
 import { Doc } from "./_generated/dataModel";
+import { artUrl } from "../lib/art";
 
 // Drama hub assembly (Spec §7): hero data, viewer relationship (follow +
 // watch status), cast, and episode summary. Fictional seed data per D-05;
@@ -98,6 +99,7 @@ export const getBySlug = query({
       releaseSchedule: drama.releaseSchedule,
       nextEpisodeAt: drama.nextEpisodeAt,
       year: drama.year,
+      posterUrl: artUrl(drama.tmdbPosterPath),
       followerCount: drama.followerCount,
       episodeCount,
       latestAired,

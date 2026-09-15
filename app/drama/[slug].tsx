@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Stack, Link, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
-import { Screen, T, Card, Row, Button, WaveProgress, EmptyState, cn } from "@/components/ui";
+import { Screen, T, Card, Row, Button, WaveProgress, EmptyState, ArtImage, cn } from "@/components/ui";
 import { PostCard, PostCardData } from "@/components/PostCard";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -92,43 +92,51 @@ export default function DramaHub() {
     <Screen>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Hero */}
-        <View className="bg-[#150A20] px-6 pt-16 pb-6">
-          <T variant="h1">{drama.title}</T>
-          {drama.titleKr ? <T variant="brand" className="mt-1">{drama.titleKr}</T> : null}
-          <Row className="mt-2 flex-wrap gap-2">
-            {drama.genres.map((g: string) => (
-              <View key={g} className="rounded-full bg-card border border-line px-3 py-1">
-                <T variant="tertiary">{g}</T>
-              </View>
-            ))}
-          </Row>
-          <T variant="secondary" className="mt-3">
-            {[drama.year, drama.network, drama.releaseSchedule].filter(Boolean).join(" · ")}
-            {drama.status === "airing" ? " · Airing" : drama.status === "upcoming" ? " · Upcoming" : " · Completed"}
-          </T>
-          {drama.synopsis ? (
-            <T variant="body" className="mt-3 text-text-secondary">{drama.synopsis}</T>
-          ) : null}
-          <Row className="mt-4 justify-between">
-            <T variant="tertiary">{drama.followerCount} followers · {drama.episodeCount} episodes</T>
-          </Row>
-          <Row className="mt-3 gap-2">
+        {/* Hero — full-bleed art with gradient scrim (reference design) */}
+        <ArtImage uri={drama.posterUrl} seed={drama.slug} label={drama.title} ratio={16 / 10} scrim>
+          <View className="p-4">
+            <Row className="flex-wrap">
+              {drama.genres.slice(0, 3).map((g: string) => (
+                <View
+                  key={g}
+                  className="rounded-full bg-white/15 border border-white/20 px-2.5 py-0.5 mr-1.5 mb-1.5"
+                >
+                  <T className="text-white/85 text-[11px]">{g}</T>
+                </View>
+              ))}
+            </Row>
+            <T variant="hero" className="text-white">{drama.title}</T>
+            {drama.titleKr ? <T className="text-white/70">{drama.titleKr}</T> : null}
+            <T className="text-white/70 text-[12px] mt-1.5">
+              {[drama.year, drama.network, drama.releaseSchedule].filter(Boolean).join(" · ")}
+              {drama.status === "airing" ? " · Airing" : drama.status === "upcoming" ? " · Upcoming" : " · Completed"}
+              {" · "}{drama.followerCount} followers · {drama.episodeCount} episodes
+            </T>
+          </View>
+        </ArtImage>
+
+        <View className="px-4 pt-3">
+          <Row>
             <Button
               label={drama.viewerFollowing ? "Following ✓" : "Follow"}
-              variant={drama.viewerFollowing ? "secondary" : "primary"}
-              size="sm"
+              variant={drama.viewerFollowing ? "secondary" : "gradient"}
+              size="md"
+              className="flex-1"
               onPress={onFollow}
             />
             {drama.nextEpisodeAt ? (
-              <T variant="coral" className="ml-2 self-center">
+              <T variant="coral" className="ml-3 flex-1">
                 Next ep {new Date(drama.nextEpisodeAt).toLocaleDateString()}
               </T>
             ) : null}
           </Row>
 
+          {drama.synopsis ? (
+            <T variant="body" className="mt-3 text-text-secondary leading-6">{drama.synopsis}</T>
+          ) : null}
+
           {/* Per-drama controls (§18 mute drama, per-drama notification settings) */}
-          <Row className="mt-2 flex-wrap">
+          <Row className="mt-3 flex-wrap">
             <Button
               label="Mute drama"
               variant="secondary"

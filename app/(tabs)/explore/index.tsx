@@ -14,6 +14,8 @@ import {
   Rail,
   SectionHeader,
   ShimmerList,
+  BrandHero,
+  HeroAction,
 } from "@/components/ui";
 import { EXPO_PUBLIC_CONVEX_URL } from "@/lib/brand";
 
@@ -43,18 +45,26 @@ export default function Explore() {
     <Screen>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        <View className="px-4 pt-14">
-          <T variant="h1">Explore</T>
+        {/* Gradient hero with embedded search (reference design language) */}
+        <BrandHero
+          title="Explore"
+          subtitle="Dramas, actors, communities, topics"
+          right={
+            <Link href="/search" asChild>
+              <HeroAction glyph="⌕" label="Search dramas, actors, communities" />
+            </Link>
+          }
+        >
           <Link href="/search" asChild>
             <Pressable
               accessibilityRole="search"
               accessibilityLabel="Search dramas, actors, communities"
-              className="mt-3 h-11 justify-center rounded-[12px] bg-card border border-line px-4"
+              className="mt-4 h-11 justify-center rounded-full bg-white/15 border border-white/20 px-4"
             >
-              <T variant="tertiary">Search dramas, actors, communities…</T>
+              <T className="text-white/70">Search dramas, actors, communities…</T>
             </Pressable>
           </Link>
-        </View>
+        </BrandHero>
 
         {/* Genre chips filter the Popular rail (§6/§51 genre browsing) */}
         {genres && genres.length > 0 ? (

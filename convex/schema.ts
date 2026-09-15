@@ -100,6 +100,10 @@ export default defineSchema({
     year: v.optional(v.number()),
     posterStorageId: v.optional(v.id("mediaObjects")),
     backdropStorageId: v.optional(v.id("mediaObjects")),
+    // TMDB art paths (D-03): set only by the sync sweep, served to the client
+    // as image.tmdb.org URLs via lib/art.ts. Uploads remain the override.
+    tmdbPosterPath: v.optional(v.string()),
+    tmdbBackdropPath: v.optional(v.string()),
     followerCount: v.number(),
   })
     .index("by_slug", ["slug"])
@@ -127,6 +131,7 @@ export default defineSchema({
     nameKr: v.optional(v.string()),
     bio: v.optional(v.string()),
     photoStorageId: v.optional(v.id("mediaObjects")),
+    tmdbPhotoPath: v.optional(v.string()),
     followerCount: v.number(),
   })
     .index("by_slug", ["slug"])

@@ -40,7 +40,10 @@
           "resizeMode": "contain",
           "backgroundColor": "#0F0F0F"
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
