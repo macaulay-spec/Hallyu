@@ -23,6 +23,9 @@ export default function DramaHub() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [tab, setTab] = useState<"episodes" | "posts">("episodes");
   const [actionNote, setActionNote] = useState<string | null>(null);
+  // Drama-hub community area filter (§7): Discussions / Theories / Memes / Edits
+  // / Official are category views of the same real stream.
+  const [category, setCategory] = useState<string | null>(null);
 
   const drama = useQuery(
     api.dramas.getBySlug,
@@ -34,7 +37,9 @@ export default function DramaHub() {
   );
   const posts = useQuery(
     api.posts.listByDrama,
-    EXPO_PUBLIC_CONVEX_URL && slug ? { slug } : "skip"
+    EXPO_PUBLIC_CONVEX_URL && slug
+      ? { slug, limit: 30, category: (category ?? undefined) as never }
+      : "skip"
   );
 
   const toggleFollow = useMutation(api.dramas.toggleFollow);
@@ -238,6 +243,38 @@ export default function DramaHub() {
             </T>
           </Pressable>
         </Row>
+
+        {tab === "posts" ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3 flex-grow-0">
+            <Row className="px-4">
+              {[
+                { value: null, label: "All" },
+                { value: "reaction", label: "Reactions" },
+                { value: "discussion", label: "Discussions" },
+                { value: "theory", label: "Theories" },
+                { value: "meme", label: "Memes" },
+                { value: "fan_content", label: "Fan edits" },
+                { value: "news", label: "Official news" },
+              ].map((c) => (
+                <Pressable
+                  key={c.label}
+                  onPress={() => setCategory(c.value)}
+                  className={cn(
+                    "mr-2 rounded-full px-3.5 py-1.5 " +
+                      (category === c.value ? "bg-brand" : "bg-card border border-line")
+                  )}
+                >
+                  <T
+                    variant="tertiary"
+                    className={category === c.value ? "text-white" : ""}
+                  >
+                    {c.label}
+                  </T>
+                </Pressable>
+              ))}
+            </Row>
+          </ScrollView>
+        ) : null}
 
         {tab === "episodes" ? (
           <View className="mt-3">

@@ -325,9 +325,16 @@ export const listFollowing = query({
   },
 });
 
+// Drama hub community area (Spec §7): Discussions / Trending / Theories /
+// Memes / Edits / Official are the same stream filtered by category, so one
+// indexed query serves every tab instead of six bespoke ones.
 export const listByDrama = query({
-  args: { slug: v.string(), limit: v.optional(v.number()) },
-  handler: async (ctx, { slug, limit = 30 }) => {
+  args: {
+    slug: v.string(),
+    limit: v.optional(v.number()),
+    category: v.optional(v.union(...CATEGORIES.map((c) => v.literal(c)))),
+  },
+  handler: async (ctx, { slug, limit = 30, category }) => {
     const viewer = await getViewerProfile(ctx);
     const drama = await ctx.db
       .query("dramas")
@@ -341,7 +348,8 @@ export const listByDrama = query({
       )
       .order("desc")
       .take(Math.min(limit, 50));
-    const assembled = await Promise.all(posts.map((p) => assemble(ctx, p, viewer)));
+    const filtered = category ? posts.filter((p) => p.category === category) : posts;
+    const assembled = await Promise.all(filtered.map((p) => assemble(ctx, p, viewer)));
     return compact(assembled);
   },
 });
