@@ -1,10 +1,8 @@
 # Hallyu — Rendered Design Previews
 
-> **These images are renders of the coded prototype in `/design` — not generated
-> artwork.** Pipeline: screen components → react-test-renderer → satori (real
-> Inter / Noto Sans KR / Ionicons metrics) → SVG → PNG @3× (1170px wide).
-> Regenerate with `npm run design:render`; `manifest.json` is written by the
-> same run.
+> **These images are the design mockups for owner review — 28 frames of the
+> proposed "Ink & Rose" redesign**, rendered at 3× (1170px wide) on a 390pt
+> iPhone-class frame. `manifest.json` lists every frame with its metadata.
 
 Frame width is a 390pt iPhone-class device. Frames taller than 844pt are scroll
 sheets (settings, states, foundations) shown in full. Click a row to open the
@@ -28,8 +26,9 @@ frame.
 
 ## Reading a frame
 
-Every frame is drawn from `design/tokens.ts` (Ink & Rose): neutral ink canvas,
-single rose accent, Inter weight contrast, 4pt grid, 20pt cards, Ionicons
-outline. Light mode is drawn from the same tokens, not inverted. Procedural key
-art (`Poster`) stands in for licensed posters until the TMDB pipeline exists;
+Every frame follows the "Ink & Rose" language: neutral ink canvas, single rose
+accent, Inter weight contrast, 4pt grid, 20pt cards, Ionicons outline. Light
+mode is drawn from the same tokens, not inverted. Placeholder key art (generated
+assets in `docs/design-assets/`) stands in for licensed posters until the TMDB
+pipeline exists;
 all people and titles are fictional.

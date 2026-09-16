@@ -19,7 +19,6 @@
     "nativewind-env.d.ts"
   ],
   "exclude": [
-    "node_modules",
-    "design/tools"
+    "node_modules"
   ]
 }

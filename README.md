@@ -4,15 +4,14 @@
 > 1. **Repository audit:** [`docs/audit/REPOSITORY_AUDIT.md`](docs/audit/REPOSITORY_AUDIT.md)
 >    — what works, what is broken, what is dead, and the disposition of the Convex
 >    backend (to be migrated to Supabase after design approval).
-> 2. **New coded UI/UX proposal:** [`design/`](design/README.md) — the complete
->    "Ink & Rose" redesign implemented as real React Native code, isolated from
->    production (mounted only at the `/design` preview route).
-> 3. **Rendered previews of that code:** [`docs/design-previews/`](docs/design-previews/README.md)
->    — 27 frames rasterized from the prototype components, not generated artwork.
+> 2. **Design mockups (for review):** [`docs/design-previews/`](docs/design-previews/README.md)
+>    — 28 rendered frames of the proposed "Ink & Rose" redesign (every core
+>    screen, plus states, light mode and the brand sheet), with the app icon and
+>    key-art assets in [`docs/design-assets/`](docs/design-assets/).
 >
-> **The design is awaiting owner approval.** Nothing in `design/` is production
-> code yet; production implementation, the Supabase rebuild and the Android/EAS
-> hardening start only after the proposal is approved.
+> **The design is awaiting owner approval.** Production implementation, the
+> Supabase rebuild and the Android/EAS hardening start only after the proposal
+> is approved.
 > Everything below describes the *current* (pre-rebuild) state of the repo.
 
 

@@ -13,9 +13,7 @@
     "lint": "eslint .",
     "doctor": "node scripts/doctor.mjs",
     "convex:dev": "convex dev",
-    "convex:deploy": "convex deploy",
-    "design:render": "node design/tools/render.mjs",
-    "design:preview": "expo start --web --port 8080 --host 0.0.0.0"
+    "convex:deploy": "convex deploy"
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.95",
@@ -46,16 +44,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@expo-google-fonts/inter": "^0.4.2",
-    "@expo-google-fonts/noto-sans-kr": "^0.4.3",
-    "@resvg/resvg-js": "^2.6.2",
     "@types/react": "~18.3.12",
     "babel-plugin-module-resolver": "^5.0.3",
     "concurrently": "^9.1.0",
     "eas-cli": "^24.3.0",
-    "esbuild": "^0.28.2",
-    "react-test-renderer": "^18.3.1",
-    "satori": "^0.33.4",
     "sharp": "^0.35.4",
     "typescript": "^5.3.3",
     "vitest": "^5.0.0"
