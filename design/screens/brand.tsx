@@ -31,7 +31,7 @@ export function IconSheet() {
                     <HallyuMark size={30} variant="mono" boxed={false} />
                   </View>
                 </Row>
-                <T t="caption" color={p.textDim}>rose · hanji light · mono on surface</T>
+                <T t="caption" color={p.textDim}>rose · light · mono</T>
               </Col>
             </Row>
           </Card>
