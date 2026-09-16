@@ -1,9 +1,9 @@
 [
   {
-    "id": "28-app-icon",
-    "title": "App icon · brand mark",
-    "group": "Foundations",
-    "height": 1400,
-    "file": "28-app-icon.png"
+    "id": "01-splash",
+    "title": "Splash",
+    "group": "First run",
+    "height": 844,
+    "file": "01-splash.png"
   }
 ]

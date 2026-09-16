@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { SPACE, brandGradient } from "../tokens";
 import { useTheme } from "../theme";
 import { IC, Icon } from "../icons";
-import { Card, Col, Eyebrow, Gradient, HallyuMark, Row, Scroll, Screen, T } from "../ui";
+import { AppIcon, Card, Col, Eyebrow, Gradient, HallyuMark, Row, Scroll, Screen, T } from "../ui";
 
 /** Brand sheet: the app icon, its variants, size ladder and in-context mocks. */
 export function IconSheet() {
@@ -16,13 +16,13 @@ export function IconSheet() {
             <Eyebrow color={p.accent}>Foundations · Brand</Eyebrow>
             <T t="display">The Hallyu mark</T>
             <T t="caption" color={p.textDim}>
-              Hangul ㅎ (hieut) reduced to three strokes — tick, bar, ring — on the Ink &amp; Rose grid. Coded geometry, no image assets; rose on ink is the primary pair.
+              Hangul ㅎ (hieut) reduced to three strokes — tick, bar, ring — on the Ink &amp; Rose grid. The shipped icon is a generated render of this coded mark; rose on ink is the primary pair.
             </T>
           </View>
 
           <Card style={{ padding: 20 }}>
             <Row gap={20} align="center">
-              <HallyuMark size={120} />
+              <AppIcon size={120} />
               <Col gap={10}>
                 <Row gap={10} align="center">
                   <HallyuMark size={48} variant="rose" />
@@ -59,7 +59,7 @@ export function IconSheet() {
               <Gradient colors={["#1C2536", "#0B0B0E"]} dir="diag" style={{ padding: 22, gap: 16 }}>
                 <Row gap={20} align="flex-start">
                   <Col gap={6} style={{ alignItems: "center" }}>
-                    <HallyuMark size={60} />
+                    <AppIcon size={60} />
                     <T t="caption" color="#FFFFFF">Hallyu</T>
                   </Col>
                   {[IC.tv, IC.heart, IC.image].map((ic, i) => (
@@ -76,7 +76,7 @@ export function IconSheet() {
             </Card>
             <Card style={{ padding: 0, overflow: "hidden" }}>
               <Gradient colors={brandGradient(p)} dir="diag" style={{ alignItems: "center", justifyContent: "center", gap: 10, paddingTop: 30, paddingBottom: 30 }}>
-                <HallyuMark size={68} />
+                <AppIcon size={68} />
                 <T t="displayXL" color="#FFFFFF" style={{ fontSize: 34, lineHeight: 40, marginTop: 6 }}>Hallyu</T>
                 <T t="krDisplay" color="rgba(255,255,255,0.82)">한류</T>
               </Gradient>

@@ -438,6 +438,20 @@ function MotifArt({ art, w, h }: { art: Art; w: number; h: number }) {
 }
 
 /** Procedural key art: gradient field + motif + optional title lockup. */
+/** Final app icon asset (AI-generated render of the coded ㅎ mark). */
+export function AppIcon({ size }: { size: number }) {
+  const src = require("./assets/icon/hallyu-icon.png");
+  return (
+    <View style={{ width: size, height: size, borderRadius: size * 0.225, overflow: "hidden", backgroundColor: "#0A0A0C" }}>
+      <Image
+        source={typeof src === "string" ? { uri: src } : (src as never)}
+        style={{ position: "absolute", left: 0, top: 0, width: size, height: size }}
+        resizeMode="cover"
+      />
+    </View>
+  );
+}
+
 /* -------------------------------- brand mark ------------------------------- */
 
 /**

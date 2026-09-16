@@ -3,7 +3,7 @@ import { View } from "react-native";
 import { RADIUS, SPACE, brandGradient } from "../tokens";
 import { useTheme } from "../theme";
 import { IC, Icon } from "../icons";
-import { Button, Col, Eyebrow, Fill, Gradient, HallyuMark, Press, Row, Screen, T, TextField, TopBar, type Nav } from "../ui";
+import { Button, Col, Eyebrow, Fill, Gradient, AppIcon, HallyuMark, Press, Row, Screen, T, TextField, TopBar, type Nav } from "../ui";
 
 /* ---------------------------------- splash -------------------------------- */
 
@@ -12,7 +12,7 @@ export function Splash() {
   return (
     <View style={{ flex: 1 }}>
       <Gradient colors={brandGradient(p)} dir="diag" style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}>
-        <HallyuMark size={78} />
+        <AppIcon size={84} />
         <T t="displayXL" color="#FFFFFF" style={{ fontSize: 44, lineHeight: 50, marginTop: 8 }}>
           Hallyu
         </T>
