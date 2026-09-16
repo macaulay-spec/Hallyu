@@ -1,5 +1,20 @@
 # Hallyu (한류) — Where the Wave Lives
 
+> ## 🎨 2026-09-16 — Full product rebuild in progress
+> 1. **Repository audit:** [`docs/audit/REPOSITORY_AUDIT.md`](docs/audit/REPOSITORY_AUDIT.md)
+>    — what works, what is broken, what is dead, and the disposition of the Convex
+>    backend (to be migrated to Supabase after design approval).
+> 2. **Design mockups (for review):** [`docs/design-previews/`](docs/design-previews/README.md)
+>    — 28 rendered frames of the proposed "Ink & Rose" redesign (every core
+>    screen, plus states, light mode and the brand sheet), with the app icon and
+>    key-art assets in [`docs/design-assets/`](docs/design-assets/).
+>
+> **The design is awaiting owner approval.** Production implementation, the
+> Supabase rebuild and the Android/EAS hardening start only after the proposal
+> is approved.
+> Everything below describes the *current* (pre-rebuild) state of the repo.
+
+
 A mobile-first social network built specifically for K-drama fandom: real-time
 episode discussion, drama hubs, communities, and a server-enforced spoiler
 system. React Native + Expo + Convex. The product contract is
