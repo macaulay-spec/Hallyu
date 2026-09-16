@@ -1,9 +1,191 @@
 [
   {
+    "id": "01-splash",
+    "title": "Splash",
+    "group": "First run",
+    "height": 844,
+    "file": "01-splash.png"
+  },
+  {
+    "id": "02-welcome",
+    "title": "Welcome",
+    "group": "First run",
+    "height": 844,
+    "file": "02-welcome.png"
+  },
+  {
+    "id": "03-signin",
+    "title": "Sign in",
+    "group": "First run",
+    "height": 844,
+    "file": "03-signin.png"
+  },
+  {
+    "id": "04-signup",
+    "title": "Sign up",
+    "group": "First run",
+    "height": 844,
+    "file": "04-signup.png"
+  },
+  {
+    "id": "05-onboarding",
+    "title": "Onboarding · interests",
+    "group": "First run",
+    "height": 844,
+    "file": "05-onboarding.png"
+  },
+  {
+    "id": "06-home-foryou",
+    "title": "Home · For You",
+    "group": "Core loop",
+    "height": 844,
+    "file": "06-home-foryou.png"
+  },
+  {
+    "id": "07-home-following",
+    "title": "Home · Following",
+    "group": "Core loop",
+    "height": 844,
+    "file": "07-home-following.png"
+  },
+  {
+    "id": "08-home-empty",
+    "title": "Home · empty state",
+    "group": "States",
+    "height": 844,
+    "file": "08-home-empty.png"
+  },
+  {
+    "id": "09-discover",
+    "title": "Discover",
+    "group": "Core loop",
+    "height": 844,
+    "file": "09-discover.png"
+  },
+  {
+    "id": "10-search-idle",
+    "title": "Search · idle",
+    "group": "Core loop",
+    "height": 844,
+    "file": "10-search-idle.png"
+  },
+  {
+    "id": "11-search-results",
+    "title": "Search · results",
+    "group": "Core loop",
+    "height": 844,
+    "file": "11-search-results.png"
+  },
+  {
+    "id": "12-drama-hub",
+    "title": "Drama hub",
+    "group": "Drama graph",
+    "height": 844,
+    "file": "12-drama-hub.png"
+  },
+  {
+    "id": "13-episode",
+    "title": "Episode discussion",
+    "group": "Drama graph",
+    "height": 844,
+    "file": "13-episode.png"
+  },
+  {
+    "id": "14-actor",
+    "title": "Actor profile",
+    "group": "Drama graph",
+    "height": 844,
+    "file": "14-actor.png"
+  },
+  {
     "id": "15-post-detail",
     "title": "Post detail · comments",
     "group": "Social",
     "height": 844,
     "file": "15-post-detail.png"
+  },
+  {
+    "id": "16-composer",
+    "title": "Composer",
+    "group": "Social",
+    "height": 844,
+    "file": "16-composer.png"
+  },
+  {
+    "id": "17-community",
+    "title": "Community",
+    "group": "Social",
+    "height": 844,
+    "file": "17-community.png"
+  },
+  {
+    "id": "18-notifications",
+    "title": "Notifications",
+    "group": "Personal",
+    "height": 844,
+    "file": "18-notifications.png"
+  },
+  {
+    "id": "19-profile",
+    "title": "Profile",
+    "group": "Personal",
+    "height": 844,
+    "file": "19-profile.png"
+  },
+  {
+    "id": "20-profile-other",
+    "title": "Profile · other fan",
+    "group": "Personal",
+    "height": 844,
+    "file": "20-profile-other.png"
+  },
+  {
+    "id": "21-watchlist",
+    "title": "Watchlist · progress",
+    "group": "Personal",
+    "height": 844,
+    "file": "21-watchlist.png"
+  },
+  {
+    "id": "22-settings",
+    "title": "Settings",
+    "group": "Personal",
+    "height": 1500,
+    "file": "22-settings.png"
+  },
+  {
+    "id": "23-report",
+    "title": "Report sheet",
+    "group": "Trust",
+    "height": 844,
+    "file": "23-report.png"
+  },
+  {
+    "id": "24-moderation",
+    "title": "Moderation queue",
+    "group": "Trust",
+    "height": 844,
+    "file": "24-moderation.png"
+  },
+  {
+    "id": "25-states",
+    "title": "Loading · empty · error · offline",
+    "group": "States",
+    "height": 1750,
+    "file": "25-states.png"
+  },
+  {
+    "id": "26-design-system",
+    "title": "Design system",
+    "group": "Foundations",
+    "height": 2400,
+    "file": "26-design-system.png"
+  },
+  {
+    "id": "27-light-mode",
+    "title": "Light mode",
+    "group": "Foundations",
+    "height": 844,
+    "file": "27-light-mode.png"
   }
 ]

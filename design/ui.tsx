@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleProp,
@@ -441,7 +442,15 @@ export function Poster({ art, width, height, title, titleKr, rounded = RADIUS.lg
   return (
     <View style={{ width, height, borderRadius: rounded, overflow: "hidden" }}>
       <Gradient colors={[art.from, art.to]} dir="down" style={{ flex: 1 }}>
-        <MotifArt art={art} w={width} h={height} />
+        {art.file ? (
+          <Image
+            source={typeof art.file === "string" ? { uri: art.file } : (art.file as never)}
+            style={{ position: "absolute", top: 0, left: 0, width, height }}
+            resizeMode="cover"
+          />
+        ) : (
+          <MotifArt art={art} w={width} h={height} />
+        )}
         <Gradient colors={["rgba(0,0,0,0)", "rgba(6,6,8,0.55)"]} dir="down" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: height * 0.62 }} />
         {title ? (
           <View style={{ position: "absolute", left: 10, right: 10, bottom: 10 }}>

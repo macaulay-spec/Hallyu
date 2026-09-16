@@ -13,8 +13,17 @@ export interface Art {
   from: string;
   to: string;
   motif: Motif;
+  /** Design-phase generated key art (placeholder). Procedural gradient when absent. */
+  file?: unknown;
 }
 
+
+/* Design-phase key art: AI-generated placeholders for fictional dramas only. */
+const ART_MIDNIGHT = require("./assets/art/midnight.png");
+const ART_SUMMER = require("./assets/art/summer.png");
+const ART_ECHOES = require("./assets/art/echoes.png");
+const ART_STILL = require("./assets/art/stillwithyou.png");
+const ART_LANTERN = require("./assets/art/lantern.png");
 export interface Drama {
   id: string;
   title: string;
@@ -157,7 +166,7 @@ export const DRAMAS: Record<string, Drama> = {
     totalEpisodes: 16,
     rating: 9.1,
     followers: "128K",
-    art: { from: "#131C33", to: "#4C6FB8", motif: "moon" },
+    art: { from: "#131C33", to: "#4C6FB8", motif: "moon" , file: ART_MIDNIGHT },
     synopsis: "A night-shift postman begins receiving letters dated forty years in the future — each one addressed to someone who has not died yet.",
   },
   summer: {
@@ -174,7 +183,7 @@ export const DRAMAS: Record<string, Drama> = {
     totalEpisodes: 12,
     rating: 8.7,
     followers: "96K",
-    art: { from: "#123B3A", to: "#5FA88F", motif: "tide" },
+    art: { from: "#123B3A", to: "#5FA88F", motif: "tide" , file: ART_SUMMER },
     synopsis: "Ten years after a promise made on a ferry platform, two ex-best friends keep almost-meeting in the same seaside town.",
   },
   echoes: {
@@ -191,7 +200,7 @@ export const DRAMAS: Record<string, Drama> = {
     totalEpisodes: 12,
     rating: 8.9,
     followers: "74K",
-    art: { from: "#1A1A20", to: "#6E6C78", motif: "city" },
+    art: { from: "#1A1A20", to: "#6E6C78", motif: "city" , file: ART_ECHOES },
     synopsis: "A sound forensic analyst hears a kidnapping in a nine-year-old recording — and recognises her own voice in it.",
   },
   stillwithyou: {
@@ -205,7 +214,7 @@ export const DRAMAS: Record<string, Drama> = {
     totalEpisodes: 16,
     rating: 9.4,
     followers: "203K",
-    art: { from: "#4A2233", to: "#C96A7B", motif: "blossom" },
+    art: { from: "#4A2233", to: "#C96A7B", motif: "blossom" , file: ART_STILL },
     synopsis: "A grief counsellor who can see the last memory of the dead meets a man whose last memory is her.",
   },
   quiettide: {
@@ -236,7 +245,7 @@ export const DRAMAS: Record<string, Drama> = {
     totalEpisodes: 14,
     rating: 8.2,
     followers: "38K",
-    art: { from: "#4A3418", to: "#C99A4E", motif: "lantern" },
+    art: { from: "#4A3418", to: "#C99A4E", motif: "lantern" , file: ART_LANTERN },
     synopsis: "Five friends inherit a failing alley of lantern shops and one very opinionated neighbourhood cat.",
   },
 };
@@ -279,7 +288,7 @@ export const POSTS: Post[] = [
     body: "Episode 8 broke me in the best way possible. The acting, the silence, the everything. I'm not okay but I'm so here for it.",
     drama: DRAMAS.midnight,
     episode: 8,
-    art: { from: "#131C33", to: "#4C6FB8", motif: "moon" },
+    art: { from: "#131C33", to: "#4C6FB8", motif: "moon" , file: ART_MIDNIGHT },
     artCaption: "the rooftop scene, but make it a painting",
     reactions: { heart: 342, tears: 128, fire: 96 },
     mine: "heart",
@@ -309,7 +318,7 @@ export const POSTS: Post[] = [
     body: "60 seconds of every glance between them in eps 1–10, cut to the OST piano theme. No dialogue. You're welcome.",
     drama: DRAMAS.summer,
     episode: 10,
-    art: { from: "#123B3A", to: "#5FA88F", motif: "tide" },
+    art: { from: "#123B3A", to: "#5FA88F", motif: "tide" , file: ART_SUMMER },
     artCaption: "4K edit · 0:60 · sound on",
     reactions: { heart: 1204, tears: 402, soft: 233 },
     comments: 98,
@@ -326,7 +335,7 @@ export const POSTS: Post[] = [
     body: "Episode 9 airs tonight at 21:20 KST. A letter arrives that was never posted. #MidnightLetters",
     drama: DRAMAS.midnight,
     episode: 9,
-    art: { from: "#16233F", to: "#4C6FB8", motif: "city" },
+    art: { from: "#16233F", to: "#4C6FB8", motif: "city" , file: ART_MIDNIGHT },
     artCaption: "Tonight · 21:20 KST",
     reactions: { fire: 890, heart: 640 },
     comments: 210,

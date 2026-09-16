@@ -25,6 +25,7 @@ await esbuild.build({
   format: "esm",
   target: "node20",
   jsx: "automatic",
+  loader: { ".png": "dataurl" },
   outfile: path.join(BUILD, "render.mjs"),
   alias: {
     "react-native": shim("react-native.tsx"),

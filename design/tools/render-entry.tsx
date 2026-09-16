@@ -167,8 +167,16 @@ function convert(node: Node): any {
         type: "div",
         props: { style: { display: "flex", flexDirection: "column", backgroundImage: gradientCss(node.props), ...expand(node.props.style) }, children: single },
       };
-    case "him":
-      return { type: "div", props: { style: divStyle(node.props.style) } };
+    case "him": {
+      const src = node.props.source?.uri ?? node.props.source;
+      return {
+        type: "img",
+        props: {
+          src: typeof src === "string" ? src : undefined,
+          style: { objectFit: "cover", ...divStyle(node.props.style) },
+        },
+      };
+    }
     default:
       return { type: "div", props: { style: divStyle(node.props.style), children: single } };
   }
