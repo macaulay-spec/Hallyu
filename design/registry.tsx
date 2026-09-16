@@ -9,6 +9,7 @@ import { PostDetail, Composer } from "./screens/social";
 import { Notifications, Watchlist, Settings } from "./screens/personal";
 import { StatesSheet, ReportSheet, ModerationQueue } from "./screens/system";
 import { DesignSystemSheet, LightModeSheet } from "./screens/foundations";
+import { IconSheet } from "./screens/brand";
 
 export interface ScreenDef {
   id: string;
@@ -51,6 +52,7 @@ export const SCREENS: ScreenDef[] = [
   { id: "24-moderation", title: "Moderation queue", group: "Trust", make: (n) => <ModerationQueue nav={n} /> },
 
   { id: "25-states", title: "Loading · empty · error · offline", group: "States", height: 1750, make: () => <StatesSheet /> },
+  { id: "28-app-icon", title: "App icon · brand mark", group: "Foundations", height: 1400, make: () => <IconSheet /> },
   { id: "26-design-system", title: "Design system", group: "Foundations", height: 2400, make: () => <DesignSystemSheet /> },
   { id: "27-light-mode", title: "Light mode", group: "Foundations", make: (n) => <LightModeSheet nav={n} /> },
 ];

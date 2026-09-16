@@ -3,17 +3,7 @@ import { View } from "react-native";
 import { RADIUS, SPACE, brandGradient } from "../tokens";
 import { useTheme } from "../theme";
 import { IC, Icon } from "../icons";
-import { Button, Col, Eyebrow, Fill, Gradient, Press, Row, Screen, T, TextField, TopBar, type Nav } from "../ui";
-
-function WaveMark({ size = 44 }: { size?: number }) {
-  return (
-    <Row gap={4} align="center">
-      {[0.4, 0.7, 1, 0.7, 0.4].map((f, i) => (
-        <View key={i} style={{ width: 4, height: size * f, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.9)", opacity: 0.45 + f * 0.5 }} />
-      ))}
-    </Row>
-  );
-}
+import { Button, Col, Eyebrow, Fill, Gradient, HallyuMark, Press, Row, Screen, T, TextField, TopBar, type Nav } from "../ui";
 
 /* ---------------------------------- splash -------------------------------- */
 
@@ -22,7 +12,7 @@ export function Splash() {
   return (
     <View style={{ flex: 1 }}>
       <Gradient colors={brandGradient(p)} dir="diag" style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 10 }}>
-        <WaveMark size={40} />
+        <HallyuMark size={78} />
         <T t="displayXL" color="#FFFFFF" style={{ fontSize: 44, lineHeight: 50, marginTop: 8 }}>
           Hallyu
         </T>

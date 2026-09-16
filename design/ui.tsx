@@ -438,6 +438,53 @@ function MotifArt({ art, w, h }: { art: Art; w: number; h: number }) {
 }
 
 /** Procedural key art: gradient field + motif + optional title lockup. */
+/* -------------------------------- brand mark ------------------------------- */
+
+/**
+ * The Hallyu app icon, coded: Hangul ㅎ (hieut) reduced to three strokes —
+ * tick, bar, ring — on a 100u grid inside a 22.5% squircle. No image assets.
+ */
+export function HallyuMark({
+  size,
+  variant = "ink",
+  boxed = true,
+}: {
+  size: number;
+  variant?: "ink" | "rose" | "light" | "mono";
+  boxed?: boolean;
+}) {
+  const u = size / 100;
+  const mark = variant === "ink" ? "#E8465A" : variant === "light" ? "#17171B" : "#FFFFFF";
+  const glyph = (
+    <View style={{ position: "absolute", left: 0, top: 0, width: size, height: size }}>
+      <View style={{ position: "absolute", left: 45.5 * u, top: 14 * u, width: 9 * u, height: 14 * u, borderRadius: 4.5 * u, backgroundColor: mark }} />
+      <View style={{ position: "absolute", left: 27 * u, top: 32 * u, width: 46 * u, height: 9 * u, borderRadius: 4.5 * u, backgroundColor: mark }} />
+      <View style={{ position: "absolute", left: 29 * u, top: 46 * u, width: 42 * u, height: 42 * u, borderRadius: 21 * u, borderWidth: 9 * u, borderColor: mark }} />
+    </View>
+  );
+  if (!boxed) return glyph;
+  const bg: [string, string] =
+    variant === "rose" ? ["#F0566A", "#C22F44"] : variant === "light" ? ["#FBFAF8", "#E7E3DB"] : ["#202027", "#0A0A0C"];
+  return (
+    <View style={{ width: size, height: size, borderRadius: size * 0.225, overflow: "hidden", backgroundColor: bg[1] }}>
+      <Gradient colors={bg} dir="down" style={{ position: "absolute", left: 0, top: 0, width: size, height: size }} />
+      {glyph}
+      <View
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: size,
+          height: size,
+          borderRadius: size * 0.225,
+          borderWidth: 1,
+          borderColor: variant === "light" ? "rgba(0,0,0,0.10)" : "rgba(255,255,255,0.10)",
+        }}
+      />
+    </View>
+  );
+}
+
 export function Poster({ art, width, height, title, titleKr, rounded = RADIUS.lg, children }: { art: Art; width: number; height: number; title?: string; titleKr?: string; rounded?: number; children?: React.ReactNode }) {
   return (
     <View style={{ width, height, borderRadius: rounded, overflow: "hidden" }}>
